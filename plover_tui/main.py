@@ -4,20 +4,23 @@ from plover.oslayer.keyboardcontrol import KeyboardEmulation
 
 from plover.gui_none.engine import Engine
 
-from random import randint
+from asciimatics.scene import Scene
 from asciimatics.screen import ManagedScreen
 from asciimatics.renderers import FigletText
 
+from asciimatics.effects import Print
+
 
 def show_error(title, message):
-    print('%s: %s' % (title, message))
     # what am I gonna do with this
-    pass
+    print('%s: %s' % (title, message))
 
 
 class App():
     def __init__(self, screen, engine):
         self.screen = screen
+        # does screen.play() block, let's find out!
+        # the answer is yes
         engine.hook_connect('send_string', self._on_send_string)
         engine.hook_connect('translated', self._on_translated)
         engine.hook_connect('config_changed', self._on_config_changed)
@@ -30,10 +33,15 @@ class App():
 
     def _on_send_string(self, s):
         # just for funsies right now
-        self.screen.print_at(FigletText(s),
-                             randint(0, self.screen.width),
-                             randint(0, self.screen.height))
-        self.screen.refresh()
+        effects = [
+            Print(
+                self.screen,
+                FigletText(s, font='big'),
+                int(self.screen.height / 2 - 8),
+                speed=1),
+        ]
+        self.screen.set_scenes([Scene(effects)])
+        self.screen.draw_next_frame()
 
     def _on_translated(self, old, new):
         # probably want this for suggestions
@@ -64,6 +72,7 @@ class App():
     def _on_focus(self):
         # this gonna be fun
         pass
+
 
 @ManagedScreen
 def main(config, screen):
