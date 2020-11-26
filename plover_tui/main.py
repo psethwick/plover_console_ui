@@ -35,9 +35,13 @@ class PaperTapeView(Frame):
         layout.add_widget(self._list)
         self.fix()
 
-    def _update(self, frame_no):
+    def update(self, frame_no):
         self._list.options = self._model.get()
-        super(PaperTapeView, self)._update(frame_no)
+        super(PaperTapeView, self).update(frame_no)
+
+    @property
+    def frame_update_count(self):
+        return 1
 
 
 class PaperTapeModel():
