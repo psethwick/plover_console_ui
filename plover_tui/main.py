@@ -1,88 +1,90 @@
 from threading import Event
+from functools import partial
 
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 
 from plover.gui_none.engine import Engine
 
+from asciimatics.widgets import Frame, Layout, Text, ListBox, Widget
 from asciimatics.scene import Scene
-from asciimatics.screen import ManagedScreen
+from asciimatics.screen import Screen
 from asciimatics.renderers import FigletText
 
 from asciimatics.effects import Print
 
 
 def show_error(title, message):
-    # what am I gonna do with this
+    # TODO what am I gonna do with this
     print('%s: %s' % (title, message))
 
 
-class App():
-    def __init__(self, screen, engine):
-        self.screen = screen
-        # does screen.play() block, let's find out!
-        # the answer is yes
-        engine.hook_connect('send_string', self._on_send_string)
-        engine.hook_connect('translated', self._on_translated)
-        engine.hook_connect('config_changed', self._on_config_changed)
-        engine.hook_connect('add_translation', self._on_add_translation)
-        engine.hook_connect('configure', self._on_configure)
-        engine.hook_connect('lookup', self._on_lookup)
-        engine.hook_connect('focus', self._on_focus)
-        engine.hook_connect('stroked', self._on_stroked)
-        engine.start()
+class PaperTapeView(Frame):
+    def __init__(self, screen, model):
+        super(PaperTapeView, self).__init__(screen,
+                                            screen.height * 2 // 3,
+                                            screen.width * 2 // 3)
+        self._model = model
+        layout = Layout([100], fill_frame=True)
+        self.add_layout(layout)
 
-    def _on_send_string(self, s):
-        # just for funsies right now
-        effects = [
-            Print(
-                self.screen,
-                FigletText(s, font='big'),
-                int(self.screen.height / 2 - 8),
-                speed=1),
-        ]
-        self.screen.set_scenes([Scene(effects)])
-        self.screen.draw_next_frame()
+        self._list = ListBox(
+            Widget.FILL_FRAME,
+            model.get(),
+            name="paper tape"
+        )
+        layout.add_widget(self._list)
+        self.fix()
 
-    def _on_translated(self, old, new):
-        # probably want this for suggestions
-        pass
-
-    def _on_config_changed(self, config_update):
-        # uhh, idk, save?
-        # what is this for
-        pass
-
-    def _on_add_translation(self, dictionary=None):
-        # open some dialog
-        # focus will be interesting
-        pass
-
-    def _on_configure(self):
-        # open some dialog
-        # focus will be interesting
-        pass
-
-    def _on_lookup(self):
-        pass
-
-    def _on_stroked(self, steno_keys):
-        # do we need this for suggestions
-        pass
-
-    def _on_focus(self):
-        # this gonna be fun
-        pass
+    def _update(self, frame_no):
+        self._list.options = self._model.get()
+        super(PaperTapeView, self)._update(frame_no)
 
 
-@ManagedScreen
-def main(config, screen):
+class PaperTapeModel():
+    def __init__(self):
+        self.counter = 1
+        self.tape = [('test', 0)]
+
+    def add(self, s):
+        if len(self.tape) > 50:
+            # good enough for now
+            self.tape.pop(0)
+        self.counter += 1
+        self.tape.append((s, self.counter))
+
+    def get(self):
+        return self.tape
+
+
+def on_stroked(model, steno_keys):
+    model.add(str(steno_keys))
+
+
+def demo(screen, scene):
+    s
+
+
+def app(screen, scene):
+    scenes = [
+        Scene([PaperTapeView(screen, paper_tape_model)], -1)
+    ]
+    screen.play(scenes, start_scene=scene)
+
+
+paper_tape_model = PaperTapeModel()
+last_scene = None
+
+
+def main(config):
     engine = Engine(config, KeyboardEmulation())
     if not engine.load_config():
         return 3
     quitting = Event()
     engine.hook_connect('quit', quitting.set)
+    engine.hook_connect('stroked', partial(on_stroked, paper_tape_model))
     try:
-        App(screen, engine)
+        engine.start()
+        Screen.wrapper(app, arguments=[last_scene])
         quitting.wait()
     except KeyboardInterrupt:
         engine.quit()
