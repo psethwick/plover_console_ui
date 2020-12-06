@@ -1,5 +1,6 @@
 from threading import Event
 from functools import partial
+from collections import defaultdict
 
 from plover.translation import unescape_translation
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
@@ -20,6 +21,7 @@ from asciimatics.effects import Print
 def show_error(title, message):
     # TODO what am I gonna do with this
     print('%s: %s' % (title, message))
+
 
 
 class ConfigurationView(Frame):
@@ -82,6 +84,12 @@ class LookupView(Frame):
         self.add_layout(button_layout)
 
         button_layout.add_widget(Button("OK", self._ok), 0)
+        # Add my own colour palette
+        self.palette = defaultdict(
+            lambda: (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK))
+        for key in ["selected_focus_field", "label"]:
+            self.palette[key] = (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK)
+        self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_GREEN)
         self.fix()
 
     def update(self, frame_no):
@@ -125,6 +133,12 @@ class MainView(Frame):
             name="paper tape"
         )
         layout.add_widget(self._list)
+        # Add my own colour palette
+        self.palette = defaultdict(
+            lambda: (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK))
+        for key in ["selected_focus_field", "label"]:
+            self.palette[key] = (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK)
+        self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_GREEN)
         self.fix()
 
     def update(self, frame_no):
@@ -155,8 +169,9 @@ class PaperTapeModel():
                 in enumerate(self.tape)]
 
 
-def flatten(suggestion, list):
-    return suggestion + "\n" + "\n\t".join([x for (x, y) in list])
+def format_suggestion(suggestion):
+    return suggestion.text + ":\n" + "\n".join(
+        ["/".join(t) for t in suggestion.steno_list])
 
 
 class LookupModel():
@@ -176,9 +191,12 @@ class LookupModel():
 
     def get_results(self):
         self.dirty = False
-        return [
-            flatten(s, r) for (s, r) in self._results
-        ]
+        l = []
+        for r in self._results:
+            l.append(r.text + ":")
+            for s in r.steno_list:
+                l.append("/".join(s))
+        return [(b, a) for (a, b) in enumerate(l)]
 
 
 class ConfigModel():
