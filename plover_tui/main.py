@@ -6,9 +6,10 @@ from plover.translation import unescape_translation
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 
 from plover.gui_none.engine import Engine
+from plover.registry import registry
 
 from asciimatics.widgets import \
-    Frame, Layout, Text, ListBox, Widget, Button
+    Frame, Layout, Text, ListBox, Widget, Button, PopUpDialog, DropdownList
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 
@@ -18,40 +19,9 @@ from asciimatics.renderers import FigletText
 from asciimatics.effects import Print
 
 
-def show_error(title, message):
+def tui_show_error(screen, title, message):
     # TODO what am I gonna do with this
     print('%s: %s' % (title, message))
-
-
-
-class ConfigurationView(Frame):
-    def __init__(self, screen, model):
-        super(ConfigurationView, self).__init__(
-            screen,
-            screen.height,
-            screen.width)
-
-        self._model = model
-        layout = Layout([100], fill_frame=True)
-        self.add_layout(layout)
-
-        self._list = ListBox(
-            Widget.FILL_FRAME,
-            model.get(),
-            name="paper tape"
-        )
-        layout.add_widget(self._list)
-        self.fix()
-
-    def update(self, frame_no):
-        if self._model.dirty:
-            self._list.options = self._model.get()
-        super(MainView, self).update(frame_no)
-
-    @property
-    def frame_update_count(self):
-        # frame is 50ms, 250ms updates should be fine
-        return 5
 
 
 class LookupView(Frame):
@@ -84,12 +54,7 @@ class LookupView(Frame):
         self.add_layout(button_layout)
 
         button_layout.add_widget(Button("OK", self._ok), 0)
-        # Add my own colour palette
-        self.palette = defaultdict(
-            lambda: (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK))
-        for key in ["selected_focus_field", "label"]:
-            self.palette[key] = (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK)
-        self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_GREEN)
+        self.palette = set_color_scheme(self.palette)
         self.fix()
 
     def update(self, frame_no):
@@ -105,7 +70,6 @@ class LookupView(Frame):
             self._model.set_results(self._engine.get_suggestions(lookup))
 
     def _ok(self):
-        # TODO this doesn't work
         raise NextScene("Main")
 
     @property
@@ -114,36 +78,68 @@ class LookupView(Frame):
         return 1
 
 
+def set_color_scheme(palette):
+    palette = defaultdict(
+        lambda: (Screen.COLOUR_YELLOW, Screen.A_NORMAL, Screen.COLOUR_BLACK)
+    )
+    for key in ["selected_focus_field", "label"]:
+        palette[key] = \
+            (Screen.COLOUR_YELLOW, Screen.A_BOLD, Screen.COLOUR_BLACK)
+    palette["title"] = \
+        (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_YELLOW)
+    return palette
+
+
 class MainView(Frame):
-    def __init__(self, screen, model):
+    def __init__(self, screen, model, engine):
         super(MainView, self).__init__(
             screen,
             screen.height,
             screen.width,
             title="Plover")
 
+        self._engine = engine
+
+        status_layout = Layout([1, 2])
+        self.add_layout(status_layout)
         self._model = model
-        layout = Layout([100], fill_frame=True)
+        layout = Layout([1])
         self.add_layout(layout)
 
-        # TODO add buttons/ widgets for stuff
+        # dunno if name is enough, but it'll do for now
+        self._machines = [
+            (m, m) for m
+            in [engine._config.as_dict()["machine_type"]] +
+               [m.name for m in registry.list_plugins("machine")]
+        ]
+
+        self._machine = DropdownList(self._machines, on_change=self._on_machine_changed, name="machine")
+
+        status_layout.add_widget(Text("Machine:", readonly=True))
+        status_layout.add_widget(self._machine, 1)
+        status_layout.add_widget(Text("System:", readonly=True))
+        status_layout.add_widget(Text(engine._config.as_dict()["system_name"], readonly=True), 1)
+        status_layout.add_widget
         self._list = ListBox(
-            Widget.FILL_FRAME,
-            model.get(),
+            50,
+            model.paper_tape.get(),
             name="paper tape"
         )
         layout.add_widget(self._list)
-        # Add my own colour palette
-        self.palette = defaultdict(
-            lambda: (Screen.COLOUR_GREEN, Screen.A_NORMAL, Screen.COLOUR_BLACK))
-        for key in ["selected_focus_field", "label"]:
-            self.palette[key] = (Screen.COLOUR_GREEN, Screen.A_BOLD, Screen.COLOUR_BLACK)
-        self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_GREEN)
+        self.palette = set_color_scheme(self.palette)
         self.fix()
 
+    def _on_machine_changed(self):
+        self.save()
+        if "machine" in self.data:
+            new_machine = self.data["machine"]
+            self._engine.config = {"machine_type": new_machine}
+
+
+
+
     def update(self, frame_no):
-        if self._model.dirty:
-            self._list.options = self._model.get()
+        self._list.options = self._model.paper_tape.get()
         super(MainView, self).update(frame_no)
 
     @property
@@ -155,16 +151,13 @@ class MainView(Frame):
 class PaperTapeModel():
     def __init__(self):
         self.tape = []
-        self.dirty = False
 
     def add(self, s):
-        self.dirty = True
         if len(self.tape) > 50:
             self.tape.pop(0)
         self.tape.append((s))
 
     def get(self):
-        self.dirty = False
         return [(s, i) for (i, s)
                 in enumerate(self.tape)]
 
@@ -178,8 +171,6 @@ class LookupModel():
     def __init__(self):
         self.dirty = False
         self._lookup = None
-        # List of named tuple
-        # (Suggestion, [strokes list])
         self._results = []
 
     def set_lookup(self, lookup):
@@ -195,7 +186,7 @@ class LookupModel():
         for r in self._results:
             l.append(r.text + ":")
             for s in r.steno_list:
-                l.append("/".join(s))
+                l.append("   " + "/".join(s))
         return [(b, a) for (a, b) in enumerate(l)]
 
 
@@ -208,29 +199,26 @@ class ConfigModel():
 def on_stroked(model, stroke):
     model.add(stroke.rtfcre)
 
+def scene_key(scene):
+    return scene.name
 
 def on_lookup(screen, engine):
     scenes = [
         Scene([LookupView(screen, lookup_model, engine)], -1, name="Lookup"),
-        Scene([MainView(screen, paper_tape_model)], -1, name="Main"),
+        Scene([MainView(screen, main_model, engine)], -1, name="Main"),
     ]
     screen.set_scenes(scenes)
+
+
+def on_add_translation(screen, engine):
+    raise
+
 
 
 def reset_machine(engine):
     engine._update(reset_machine=True)
 
 
-def app(screen, scene, engine):
-    engine.hook_connect('stroked', partial(on_stroked, paper_tape_model))
-    engine.hook_connect('lookup', partial(on_lookup, screen, engine))
-    scenes = [
-        Scene([MainView(screen, paper_tape_model)], -1, name="Main"),
-        #Scene([ConfigurationView(screen, config_model)], -1),
-        Scene([LookupView(screen, lookup_model, engine)], -1, name="Lookup"),
-    ]
-    engine.start()
-    screen.play(scenes, start_scene=scene)
 
 # machine status
 # reconnect
@@ -245,9 +233,30 @@ def app(screen, scene, engine):
 # 4. might need some for lookup/dictionary stuff?
 
 
+class MainModel():
+    def __init__(self, lookup, paper_tape):
+        self.lookup = lookup
+        self.paper_tape = paper_tape
+        self.view = 'main'
+
+
 paper_tape_model = PaperTapeModel()
 lookup_model = LookupModel()
+main_model = MainModel(lookup_model, paper_tape_model)
 last_scene = None
+
+
+def app(screen, scene, engine):
+    scenes = [
+        Scene([MainView(screen, main_model, engine)], -1, name="Main"),
+        Scene([LookupView(screen, lookup_model, engine)], -1, name="Lookup"),
+    ]
+
+    engine.hook_connect('stroked', partial(on_stroked, paper_tape_model))
+    engine.hook_connect('lookup', partial(on_lookup, screen, engine))
+    engine.hook_connect('add_translation', partial(on_add_translation, screen, engine))
+    engine.start()
+    screen.play(scenes, start_scene=scene)
 
 
 def main(config):
