@@ -56,10 +56,12 @@ class LookupView(Frame):
         super(LookupView, self).update(frame_no)
 
     def process_event(self, event):
-        # TODO huh, this breaks input ??
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_ESCAPE:
                 raise NextScene("Main")
+            super(LookupView, self).process_event(event)
+        else:
+            super(LookupView, self).process_event(event)
 
     def _on_change(self):
         self.save()
