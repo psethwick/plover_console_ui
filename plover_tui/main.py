@@ -1,27 +1,30 @@
 from threading import Event
 from functools import partial
 from collections import defaultdict
+import re
 
 from plover.translation import unescape_translation
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
+from plover.formatting import RetroFormatter
+from plover.suggestions import Suggestion
+
 
 from plover.gui_none.engine import Engine
 from plover.registry import registry
 
 from asciimatics.widgets import \
-    Frame, Layout, Text, ListBox, Widget, Button, PopUpDialog, DropdownList
+    Frame, Layout, Text, ListBox, Button, DropdownList, \
+    Divider, VerticalDivider
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 
 from asciimatics.exceptions import NextScene
 
-from asciimatics.renderers import FigletText
-from asciimatics.effects import Print
+WORD_RX = re.compile(r'(?:\w+|[^\w\s]+)\s*')
 
 
-def tui_show_error(screen, title, message):
-    # TODO what am I gonna do with this
-    print('%s: %s' % (title, message))
+def show_error(title, message):
+    print(title + message)
 
 
 class LookupView(Frame):
@@ -41,12 +44,12 @@ class LookupView(Frame):
         layout.add_widget(Text("Translation:", "lookup",
                                on_change=self._on_change))
 
-        self._list = ListBox(
-            50,
+        self._paper_tape = ListBox(
+            100,
             model.get_results(),
             name="paper tape"
         )
-        layout.add_widget(self._list)
+        layout.add_widget(self._paper_tape)
 
         # TODO handle escape?
         # then probably don't need buttons
@@ -58,8 +61,7 @@ class LookupView(Frame):
         self.fix()
 
     def update(self, frame_no):
-        if self._model.dirty:
-            self._list.options = self._model.get_results()
+        self._paper_tape.options = self._model.get_results()
         super(LookupView, self).update(frame_no)
 
     def _on_change(self):
@@ -100,10 +102,10 @@ class MainView(Frame):
 
         self._engine = engine
 
-        status_layout = Layout([1, 2])
+        status_layout = Layout([10, 10, 10], fill_frame=True)
         self.add_layout(status_layout)
         self._model = model
-        layout = Layout([1])
+        layout = Layout([49, 1, 49])
         self.add_layout(layout)
 
         # dunno if name is enough, but it'll do for now
@@ -113,33 +115,59 @@ class MainView(Frame):
                [m.name for m in registry.list_plugins("machine")]
         ]
 
-        self._machine = DropdownList(self._machines, on_change=self._on_machine_changed, name="machine")
+        self._systems = [
+            (s, s) for s
+            in [engine._config.as_dict()["system_name"]] +
+               [s.name for s in registry.list_plugins("system")]
+
+        ]
+        self._machine = DropdownList(self._machines, name="machine", on_change=self._on_machine_changed)
 
         status_layout.add_widget(Text("Machine:", readonly=True))
+        status_layout.add_widget(Button("reset", self._reconnect_machine), 2)
         status_layout.add_widget(self._machine, 1)
         status_layout.add_widget(Text("System:", readonly=True))
-        status_layout.add_widget(Text(engine._config.as_dict()["system_name"], readonly=True), 1)
-        status_layout.add_widget
-        self._list = ListBox(
-            50,
+        # TODO implement system switching
+        self._system = DropdownList(self._systems, name="system", on_change=self._on_system_changed)
+        status_layout.add_widget(self._system, 1)
+        self._paper_tape = ListBox(
+            100,
             model.paper_tape.get(),
             name="paper tape"
         )
-        layout.add_widget(self._list)
+        layout.add_widget(Divider())
+        layout.add_widget(Divider(), 1)
+        layout.add_widget(Divider(), 2)
+        layout.add_widget(Text("Paper Tape", readonly=True))
+        layout.add_widget(self._paper_tape)
+        self._suggestions = ListBox(
+            100,
+            model.suggestions.get(),
+            name="suggestions"
+        )
+        layout.add_widget(VerticalDivider(), 1)
+        layout.add_widget(Text("Suggestions", readonly=True), 2)
+        layout.add_widget(self._suggestions, 2)
         self.palette = set_color_scheme(self.palette)
         self.fix()
+
+    def _reconnect_machine(self):
+        self._engine.reset_machine()
 
     def _on_machine_changed(self):
         self.save()
         if "machine" in self.data:
-            new_machine = self.data["machine"]
-            self._engine.config = {"machine_type": new_machine}
+            self._engine.config = {"machine_type": self.data["machine"]}
 
-
-
+    def _on_system_changed(self):
+        self.save()
+        if "system" in self.data:
+            self._engine.config = {"system_name": self.data["system"]}
 
     def update(self, frame_no):
-        self._list.options = self._model.paper_tape.get()
+        # TODO do I need more state refresh
+        self._paper_tape.options = self._model.paper_tape.get()
+        self._suggestions.options = self._model.suggestions.get()
         super(MainView, self).update(frame_no)
 
     @property
@@ -169,7 +197,6 @@ def format_suggestion(suggestion):
 
 class LookupModel():
     def __init__(self):
-        self.dirty = False
         self._lookup = None
         self._results = []
 
@@ -177,13 +204,24 @@ class LookupModel():
         self._lookup = lookup
 
     def set_results(self, results):
-        self.dirty = True
         self._results = results
 
     def get_results(self):
-        self.dirty = False
         l = []
         for r in self._results:
+            l.append(r.text + ":")
+            for s in r.steno_list:
+                l.append("   " + "/".join(s))
+        return [(b, a) for (a, b) in enumerate(l)]
+
+
+class SuggestionsModel():
+    def __init__(self):
+        self.suggestions = []
+
+    def get(self):
+        l = []
+        for r in self.suggestions:
             l.append(r.text + ":")
             for s in r.steno_list:
                 l.append("   " + "/".join(s))
@@ -196,11 +234,38 @@ class ConfigModel():
         self.plover_config = plover_config
 
 
-def on_stroked(model, stroke):
-    model.add(stroke.rtfcre)
+def on_stroked(paper_tape_model, stroke):
+    paper_tape_model.add(stroke.rtfcre)
 
-def scene_key(scene):
-    return scene.name
+
+def tails(ls):
+    for i in range(len(ls)):
+        yield ls[i:]
+
+
+def on_translated(engine, model, old, new):
+    # Check for new output.
+    for a in reversed(new):
+        if a.text and not a.text.isspace():
+            break
+    else:
+        return
+
+    last_translations = engine.translator_state.translations
+    retro_formatter = RetroFormatter(last_translations)
+    split_words = retro_formatter.last_words(10, rx=WORD_RX)
+
+    suggestion_list = []
+    for phrase in tails(split_words):
+        phrase = ''.join(phrase)
+        suggestion_list.extend(engine.get_suggestions(phrase))
+
+    if not suggestion_list and split_words:
+        suggestion_list = [Suggestion(split_words[-1], [])]
+
+    if suggestion_list and suggestion_list != model.suggestions:
+        model.suggestions = suggestion_list
+
 
 def on_lookup(screen, engine):
     scenes = [
@@ -212,13 +277,6 @@ def on_lookup(screen, engine):
 
 def on_add_translation(screen, engine):
     raise
-
-
-
-def reset_machine(engine):
-    engine._update(reset_machine=True)
-
-
 
 # machine status
 # reconnect
@@ -232,17 +290,19 @@ def reset_machine(engine):
 # 3. suggestions
 # 4. might need some for lookup/dictionary stuff?
 
+# I think I want a single column
 
 class MainModel():
-    def __init__(self, lookup, paper_tape):
+    def __init__(self, lookup, paper_tape, suggestions):
         self.lookup = lookup
         self.paper_tape = paper_tape
-        self.view = 'main'
+        self.suggestions = suggestions
 
 
 paper_tape_model = PaperTapeModel()
 lookup_model = LookupModel()
-main_model = MainModel(lookup_model, paper_tape_model)
+suggestions_model = SuggestionsModel()
+main_model = MainModel(lookup_model, paper_tape_model, suggestions_model)
 last_scene = None
 
 
@@ -254,6 +314,7 @@ def app(screen, scene, engine):
 
     engine.hook_connect('stroked', partial(on_stroked, paper_tape_model))
     engine.hook_connect('lookup', partial(on_lookup, screen, engine))
+    engine.hook_connect('translated', partial(on_translated, engine, suggestions_model))
     engine.hook_connect('add_translation', partial(on_add_translation, screen, engine))
     engine.start()
     screen.play(scenes, start_scene=scene)
