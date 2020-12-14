@@ -181,18 +181,20 @@ class PaperTapeModel():
         self.tape = []
 
     def add(self, s):
-        if len(self.tape) > 50:
-            self.tape.pop(0)
-        self.tape.append((s))
+        self.tape.insert(0, s)
 
     def get(self):
         return [(s, i) for (i, s)
                 in enumerate(self.tape)]
 
 
-def format_suggestion(suggestion):
-    return suggestion.text + ":\n" + "\n".join(
-        ["/".join(t) for t in suggestion.steno_list])
+def format_suggestions(suggestions):
+    l = []
+    for r in suggestions:
+        l.append(r.text + ":")
+        for s in r.steno_list:
+            l.append("   " + "/".join(s))
+    return [(b, a) for (a, b) in enumerate(l)]
 
 
 class LookupModel():
@@ -207,25 +209,21 @@ class LookupModel():
         self._results = results
 
     def get_results(self):
-        l = []
-        for r in self._results:
-            l.append(r.text + ":")
-            for s in r.steno_list:
-                l.append("   " + "/".join(s))
-        return [(b, a) for (a, b) in enumerate(l)]
+        return format_suggestions(self._results)
 
 
 class SuggestionsModel():
     def __init__(self):
+        self.last_suggestions = []
         self.suggestions = []
 
+    def add(self, suggestions):
+        self.suggestions[0:0] = suggestions
+        if (len(self.suggestions) > 100):
+            del self.suggestions[50:]
+
     def get(self):
-        l = []
-        for r in self.suggestions:
-            l.append(r.text + ":")
-            for s in r.steno_list:
-                l.append("   " + "/".join(s))
-        return [(b, a) for (a, b) in enumerate(l)]
+        return format_suggestions(self.suggestions)
 
 
 class ConfigModel():
@@ -263,8 +261,8 @@ def on_translated(engine, model, old, new):
     if not suggestion_list and split_words:
         suggestion_list = [Suggestion(split_words[-1], [])]
 
-    if suggestion_list and suggestion_list != model.suggestions:
-        model.suggestions = suggestion_list
+    if suggestion_list:
+        model.add(suggestion_list)
 
 
 def on_lookup(screen, engine):
