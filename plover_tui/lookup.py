@@ -7,6 +7,7 @@ from asciimatics.screen import Screen
 
 from .viewcommon import set_color_scheme
 from .suggestions import format_suggestions
+from .focus import focus_pop
 
 
 class LookupModel():
@@ -58,10 +59,9 @@ class LookupView(Frame):
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_ESCAPE:
+                focus_pop()
                 raise NextScene("Main")
-            super(LookupView, self).process_event(event)
-        else:
-            super(LookupView, self).process_event(event)
+        super(LookupView, self).process_event(event)
 
     def _on_change(self):
         self.save()

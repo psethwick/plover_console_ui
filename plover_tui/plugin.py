@@ -14,6 +14,7 @@ from .main import MainView
 
 from .papertape import PaperTapeModel, on_stroked
 from .suggestions import SuggestionsModel, on_translated
+from .focus import mark, focus_tui, TUI_MARKER
 
 
 def show_error(title, message):
@@ -21,6 +22,7 @@ def show_error(title, message):
 
 
 def on_lookup(screen, engine):
+    focus_tui()
     scenes = [
         Scene([LookupView(screen, lookup_model, engine)], -1, name="Lookup"),
         Scene([MainView(screen, main_model, engine)], -1, name="Main"),
@@ -75,6 +77,7 @@ def app(screen, scene, engine):
 
 
 def main(config):
+    mark(TUI_MARKER)
     engine = Engine(config, KeyboardEmulation())
     if not engine.load_config():
         return 3
