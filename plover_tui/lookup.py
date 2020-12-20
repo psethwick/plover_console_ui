@@ -25,9 +25,9 @@ class LookupModel():
         return format_suggestions(self._results)
 
 
-class LookupView(Frame):
+class Lookup(Frame):
     def __init__(self, screen, model, engine):
-        super(LookupView, self).__init__(
+        super(Lookup, self).__init__(
             screen,
             screen.height * 2 // 3,
             screen.width * 2 // 3,
@@ -54,14 +54,14 @@ class LookupView(Frame):
 
     def update(self, frame_no):
         self._paper_tape.options = self._model.get_results()
-        super(LookupView, self).update(frame_no)
+        super(Lookup, self).update(frame_no)
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_ESCAPE:
                 focus_pop()
-                raise NextScene("Main")
-        super(LookupView, self).process_event(event)
+                self.delete_count = 0
+        super(Lookup, self).process_event(event)
 
     def _on_change(self):
         self.save()
@@ -72,5 +72,4 @@ class LookupView(Frame):
 
     @property
     def frame_update_count(self):
-        # this one should be fast
         return 1

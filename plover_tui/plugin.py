@@ -9,8 +9,8 @@ from plover.gui_none.engine import Engine
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 
-from .lookup import LookupView, LookupModel
-from .main import MainView
+from .lookup import Lookup, LookupModel
+from .main import Main
 
 from .papertape import PaperTapeModel, on_stroked
 from .suggestions import SuggestionsModel, on_translated
@@ -19,8 +19,6 @@ from .focus import mark, focus_tui, TUI_MARKER
 
 def show_error(title, message):
     print(title + message)
-
-
 
 
 def on_add_translation(screen, engine):
@@ -52,16 +50,9 @@ main_model = MainModel(paper_tape_model, suggestions_model, lookup_model)
 last_scene = None
 
 
-def get_scenes(screen, main_model, engine, first_scene="Main"):
-    return sorted([
-        Scene([MainView(screen, main_model, engine)], -1, name="Main"),
-        Scene([LookupView(screen, main_model.lookup, engine)], -1, name="Lookup"),
-    ], key=lambda s: s.name != first_scene)
-
-
 def on_lookup(screen, engine):
     focus_tui()
-    screen.set_scenes(get_scenes(screen, main_model, engine, "Lookup"))
+    screen.current_scene.add_effect(Lookup(screen, lookup_model, engine))
 
 
 def app(screen, scene, engine):
@@ -72,7 +63,8 @@ def app(screen, scene, engine):
     engine.hook_connect(
         'add_translation', partial(on_add_translation, screen, engine))
     engine.start()
-    screen.play(get_scenes(screen, main_model, engine), start_scene=scene)
+    screen.play([Scene([Main(screen, main_model, engine)], -1, name="Main")],
+                start_scene=scene)
 
 
 def main(config):
