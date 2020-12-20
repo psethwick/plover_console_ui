@@ -48,15 +48,19 @@ class Main(Frame):
         status_layout.add_widget(Divider(), 1)
 
         status_layout.add_widget(Button("Reconnect", self._reconnect_machine))
+        status_layout.add_widget(RadioButtons(
+            [("Suggestions", self._model.suggestions.get),
+             ("Paper Tape", self._model.paper_tape.get)], name="list",
+            on_change=self._on_config_changed))
 
         self._output = CheckBox("Output",
                                 name="output",
                                 on_change=self._on_config_changed)
         status_layout.add_widget(self._output, 1)
+        self._list_get = model.suggestions.get
         self._list = ListBox(
             10,
-            model.paper_tape.get(),
-            name="paper tape"
+            self._list_get()
         )
         layout.add_widget(Divider())
         layout.add_widget(self._list)
@@ -74,10 +78,11 @@ class Main(Frame):
             self._engine.config = {"system_name": self.data["system"]}
         if "output" in self.data:
             self._engine.output = self.data["output"]
+        if "list" in self.data:
+            self._list_get = self.data["list"]
 
     def update(self, frame_no):
-        # TODO do I need more state refresh
-        self._list.options = self._model.paper_tape.get()
+        self._list.options = self._list_get()
         self._output.value = self._engine.output
         # self._suggestions.options = self._model.suggestions.get()
         super(Main, self).update(frame_no)
