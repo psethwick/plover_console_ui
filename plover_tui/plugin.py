@@ -9,11 +9,13 @@ from plover.gui_none.engine import Engine
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 
+from .addtranslation import AddTranslationModel, AddTranslation
 from .lookup import Lookup, LookupModel
-from .main import Main
 
+from .main import Main
 from .papertape import PaperTapeModel, on_stroked
 from .suggestions import SuggestionsModel, on_translated
+
 from .focus import mark, focus_tui, TUI_MARKER
 
 
@@ -21,14 +23,7 @@ def show_error(title, message):
     print(title + message)
 
 
-def on_add_translation(screen, engine):
-    raise
-
 # machine status
-# reconnect
-# choose machine
-# choose system
-# output/etc
 
 
 # I think I want a single column
@@ -37,22 +32,28 @@ def on_add_translation(screen, engine):
 # TODO turn off scroll bar?
 
 class MainModel():
-    def __init__(self, paper_tape, suggestions, lookup_model):
+    def __init__(self, paper_tape, suggestions):
         self.paper_tape = paper_tape
         self.suggestions = suggestions
-        self.lookup = lookup_model
 
 
 paper_tape_model = PaperTapeModel()
 lookup_model = LookupModel()
+add_translation_model = AddTranslationModel()
 suggestions_model = SuggestionsModel()
-main_model = MainModel(paper_tape_model, suggestions_model, lookup_model)
+main_model = MainModel(paper_tape_model, suggestions_model)
 last_scene = None
 
 
 def on_lookup(screen, engine):
     focus_tui()
     screen.current_scene.add_effect(Lookup(screen, lookup_model, engine))
+
+
+def on_add_translation(screen, engine):
+    focus_tui()
+    screen.current_scene.add_effect(
+        AddTranslation(screen, add_translation_model, engine))
 
 
 def app(screen, scene, engine):

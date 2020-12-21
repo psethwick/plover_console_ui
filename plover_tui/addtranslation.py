@@ -5,61 +5,58 @@ from asciimatics.widgets import Frame, Layout, Text, ListBox
 from asciimatics.screen import Screen
 
 from .viewcommon import set_color_scheme
-from .suggestions import format_suggestions
 from .focus import focus_pop
 
 
-class LookupModel():
+class AddTranslationModel():
     def __init__(self):
-        self._lookup = None
-        self._results = []
-
-    def set_lookup(self, lookup):
-        self._lookup = lookup
-
-    def set_results(self, results):
-        self._results = results
+        pass
 
     def get_results(self):
-        return format_suggestions(self._results)
+        return []
 
 
-class Lookup(Frame):
+class AddTranslation(Frame):
     def __init__(self, screen, model, engine):
-        super(Lookup, self).__init__(
+        super(AddTranslation, self).__init__(
             screen,
             screen.height * 2 // 3,
             screen.width * 2 // 3,
-            title="Lookup"
+            title="Add Translation"
         )
-
         self._model = model
         self._engine = engine
 
         layout = Layout([100], fill_frame=True)
         self.add_layout(layout)
-        layout.add_widget(Text("Lookup:", "lookup",
+        layout.add_widget(Text("Strokes:", "strokes",
+                               on_change=self._on_change))
+        layout.add_widget(Text("Translation:", "translation",
                                on_change=self._on_change))
 
-        self._suggestions = ListBox(
+        self._existing_translations = ListBox(
             100,
             model.get_results(),
         )
-        layout.add_widget(self._suggestions)
+        layout.add_widget(self._existing_translations)
 
         self.palette = set_color_scheme(self.palette)
         self.fix()
 
     def update(self, frame_no):
-        self._suggestions.options = self._model.get_results()
-        super(Lookup, self).update(frame_no)
+        self._existing_translations.options = self._model.get_results()
+        super(AddTranslation, self).update(frame_no)
 
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_ESCAPE:
                 focus_pop()
                 self.delete_count = 0
-        super(Lookup, self).process_event(event)
+            # enter, I sure hope this is cross platform
+            if event.key_code == 10:
+                focus_pop()
+                self.delete_count = 0
+        super(AddTranslation, self).process_event(event)
 
     def _on_change(self):
         self.save()
