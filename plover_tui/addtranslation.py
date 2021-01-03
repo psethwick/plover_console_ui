@@ -1,36 +1,47 @@
 from plover.translation import unescape_translation
+from plover.oslayer.wmctrl import SetForegroundWindow
 
 from asciimatics.event import KeyboardEvent
 from asciimatics.widgets import Frame, Layout, Text, ListBox
 from asciimatics.screen import Screen
 
 from .viewcommon import set_color_scheme
-from .focus import focus_pop
 
 
 class AddTranslationModel():
     def __init__(self):
-        pass
+        self.strokes = "PPHORB"
+        self.translation = "mosh"
+        self.strokeconflict = None
 
     def get_results(self):
-        return []
+        results = []
+        if self.conflicts:
+            return
+
+
+        f'{self.strokes} is d'
 
 
 class AddTranslation(Frame):
-    def __init__(self, screen, model, engine):
+    def __init__(self, screen, model, engine, previous_window):
         super(AddTranslation, self).__init__(
             screen,
             screen.height * 2 // 3,
             screen.width * 2 // 3,
             title="Add Translation"
         )
+        self._previous_window = previous_window
         self._model = model
         self._engine = engine
 
         layout = Layout([100], fill_frame=True)
         self.add_layout(layout)
+
+        self.data["strokes"] = self._model.strokes
         layout.add_widget(Text("Strokes:", "strokes",
                                on_change=self._on_change))
+        self.data["translation"] = self._model.translation
         layout.add_widget(Text("Translation:", "translation",
                                on_change=self._on_change))
 
@@ -50,11 +61,14 @@ class AddTranslation(Frame):
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_ESCAPE:
-                focus_pop()
+                # nope out
+                SetForegroundWindow(self._previous_window)
                 self.delete_count = 0
             # enter, I sure hope this is cross platform
             if event.key_code == 10:
-                focus_pop()
+                # add the translation if things are valid
+                # then nope out
+                SetForegroundWindow(self._previous_window)
                 self.delete_count = 0
         super(AddTranslation, self).process_event(event)
 

@@ -2,6 +2,7 @@ from threading import Event
 from functools import partial
 
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
+from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
 
 
 from plover.gui_none.engine import Engine
@@ -15,9 +16,6 @@ from .lookup import Lookup, LookupModel
 from .main import Main
 from .papertape import PaperTapeModel, on_stroked
 from .suggestions import SuggestionsModel, on_translated
-
-from .focus import mark, focus_tui, TUI_MARKER
-
 
 def show_error(title, message):
     print(title + message)
@@ -44,14 +42,18 @@ suggestions_model = SuggestionsModel()
 main_model = MainModel(paper_tape_model, suggestions_model)
 last_scene = None
 
+# TODO should maybe find a way to find the window
+tui_window = GetForegroundWindow()
 
 def on_lookup(screen, engine):
-    focus_tui()
-    screen.current_scene.add_effect(Lookup(screen, lookup_model, engine))
+    previous_window = GetForegroundWindow()
+    SetForegroundWindow(tui_window)
+    screen.current_scene.add_effect(Lookup(screen, lookup_model, engine, previous_window))
 
 
 def on_add_translation(screen, engine):
-    focus_tui()
+    previous_window = GetForegroundWindow()
+    SetForegroundWindow(tui_window)
     screen.current_scene.add_effect(
         AddTranslation(screen, add_translation_model, engine))
 
@@ -69,7 +71,6 @@ def app(screen, scene, engine):
 
 
 def main(config):
-    mark(TUI_MARKER)
     engine = Engine(config, KeyboardEmulation())
     if not engine.load_config():
         return 3

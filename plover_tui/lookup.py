@@ -1,4 +1,5 @@
 from plover.translation import unescape_translation
+from plover.oslayer.wmctrl import SetForegroundWindow
 
 from asciimatics.event import KeyboardEvent
 from asciimatics.widgets import Frame, Layout, Text, ListBox
@@ -6,7 +7,6 @@ from asciimatics.screen import Screen
 
 from .viewcommon import set_color_scheme
 from .suggestions import format_suggestions
-from .focus import focus_pop
 
 
 class LookupModel():
@@ -25,7 +25,7 @@ class LookupModel():
 
 
 class Lookup(Frame):
-    def __init__(self, screen, model, engine):
+    def __init__(self, screen, model, engine, previous_window):
         super(Lookup, self).__init__(
             screen,
             screen.height * 2 // 3,
@@ -33,6 +33,7 @@ class Lookup(Frame):
             title="Lookup"
         )
 
+        self._previous_window = previous_window
         self._model = model
         self._engine = engine
 
@@ -57,7 +58,7 @@ class Lookup(Frame):
     def process_event(self, event):
         if isinstance(event, KeyboardEvent):
             if event.key_code == Screen.KEY_ESCAPE:
-                focus_pop()
+                SetForegroundWindow(self._previous_window)
                 self.delete_count = 0
         super(Lookup, self).process_event(event)
 
