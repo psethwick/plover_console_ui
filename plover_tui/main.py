@@ -1,6 +1,6 @@
 from asciimatics.widgets import \
-    Frame, Layout, Text, ListBox, Button, DropdownList, \
-    Divider, VerticalDivider, RadioButtons, CheckBox
+    Frame, Layout, ListBox, Button, DropdownList, \
+    Divider, RadioButtons, CheckBox
 
 from plover.registry import registry
 
@@ -23,16 +23,18 @@ class Main(Frame):
         layout = Layout([1])
         self.add_layout(layout)
 
+        machine = engine._config.as_dict()["machine_type"]
         self._machines = [
             (m, m) for m
-            in [engine._config.as_dict()["machine_type"]] +
-               [m.name for m in registry.list_plugins("machine")]
+            in sorted([m.name for m in registry.list_plugins("machine")],
+                      key=lambda m: m == machine)
         ]
 
+        system = engine._config.as_dict()["system_name"]
         self._systems = [
             (s, s) for s
-            in [engine._config.as_dict()["system_name"]] +
-               [s.name for s in registry.list_plugins("system")]
+            in sorted([s.name for s in registry.list_plugins("system")],
+                      key=lambda s: s == system)
         ]
         self._machine = DropdownList(
             self._machines,
@@ -82,9 +84,10 @@ class Main(Frame):
             self._list_get = self.data["list"]
 
     def update(self, frame_no):
+        # self._suggestions.options = self._model.suggestions.get()
+        # TODO all the status stuff needs refresh
         self._list.options = self._list_get()
         self._output.value = self._engine.output
-        # self._suggestions.options = self._model.suggestions.get()
         super(Main, self).update(frame_no)
 
     @property

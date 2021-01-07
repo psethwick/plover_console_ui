@@ -39,8 +39,8 @@ class AddTranslation(Frame):
         self.add_layout(layout)
 
         self.data["strokes"] = self._model.strokes
-        layout.add_widget(Text("Strokes:", "strokes",
-                               on_change=self._on_change))
+        self._strokes = Text("Strokes:", "strokes", readonly=True)
+        layout.add_widget(self._strokes)
         self.data["translation"] = self._model.translation
         layout.add_widget(Text("Translation:", "translation",
                                on_change=self._on_change))
