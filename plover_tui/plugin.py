@@ -1,15 +1,17 @@
 from threading import Event
 from functools import partial
 
-import asyncio
 from time import sleep
 
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
 
-# TODO really shouldn't use this one, could screw me over
-from plover.gui_none.engine import Engine
 from plover.registry import registry
+from plover.steno_dictionary import StenoDictionaryCollection
+from prompt_toolkit import application
+from prompt_toolkit.filters import app
+
+from prompt_toolkit import PromptSession
 
 from prompt_toolkit.layout.controls import FormattedTextControl
 
@@ -17,7 +19,6 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit import Application
 from prompt_toolkit.shortcuts import input_dialog
 from prompt_toolkit.widgets import RadioList
-from pygments.lexers.html import HtmlLexer
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.application.current import get_app
@@ -43,6 +44,8 @@ from prompt_toolkit.widgets import (
     TextArea,
 )
 
+from .tuiengine import TuiEngine
+
 class Stroky:
     def __init__(self) -> None:
         self.strokes = ""
@@ -55,9 +58,9 @@ class Stroky:
 
 strocks = Stroky()
 
-def on_stroked(stroke):
+def on_stroked(app, stroke):
     strocks.add(stroke.rtfcre)
-    application.invalidate()
+    app.invalidate()
 
 def accept_yes():
     get_app().exit(result=True)
@@ -73,9 +76,10 @@ def do_exit():
 
 yes_button = Button(text="Yes", handler=accept_yes)
 no_button = Button(text="No", handler=accept_no)
-textfield = Frame(Window(content=FormattedTextControl(text=strocks.get)), title="")
+textfield = Frame(Window(content=FormattedTextControl(text=strocks.get)), title="Paper Tape")
 checkbox1 = Checkbox(text="Checkbox")
 checkbox2 = Checkbox(text="Checkbox")
+dictionaryCheckboxes = [checkbox1, checkbox2]
 
 radios = RadioList(
     values=[
@@ -136,16 +140,11 @@ root_container = HSplit(
                 Frame(body=ProgressBar(), title="Progress bar"),
                 Frame(
                     title="Checkbox list",
-                    body=HSplit([checkbox1, checkbox2]),
+                    body=HSplit(dictionaryCheckboxes),
                 ),
                 Frame(title="Radio list", body=radios),
             ],
             padding=1,
-        ),
-        Box(
-            body=VSplit([yes_button, no_button], align="CENTER", padding=3),
-            style="class:button-bar",
-            height=3,
         ),
     ]
 )
@@ -231,17 +230,15 @@ style = Style.from_dict(
 )
 
 
-application = Application(
-    layout=Layout(root_container, focused_element=yes_button),
-    key_bindings=bindings,
-    style=style,
-    mouse_support=True,
-    full_screen=True,
-    refresh_interval=.1,
-)
+def back_channel(engine, app: Application):
+    if radios.current_value != engine.config['machine_type']:
+            engine.config = {"machine_type": radios.current_value}
+
 
 
 def show_error(title, message):
+    # TODO probably float a window?
+    # or maybe just have a 'notifications' pane
     print(title + message)
 
 
@@ -269,8 +266,8 @@ def on_lookup():
     ).run()
 
 
-def on_config_changed(engine, config):
-    machine = engine.config["machine_type"]
+def on_config_changed(engine, app, config):
+    machine = config["machine_type"]
     radios.values = [
         (m, m) for m
         in sorted(
@@ -279,19 +276,62 @@ def on_config_changed(engine, config):
             key=lambda m: m == machine)
     ]
     radios.current_value = machine
-    application.invalidate()
+    app.invalidate()
+
+def on_dictionaries_loaded(app, checkbs, dicts: StenoDictionaryCollection):
+    pass
+    # print(dicts)
+    # checkbs = [ 
+    #     Checkbox(d.short_path, d.enabled)
+    #     for d in dicts
+    # ]
+    # app.invalidate()
 
 def main(config):
-    engine = Engine(config, KeyboardEmulation())
+    engine = TuiEngine(config, KeyboardEmulation())
     if not engine.load_config():
         return 3
     quitting = Event()
-    # TODO must actually call this lol
-    engine.hook_connect('quit', quitting.set)
-    engine.hook_connect('stroked', on_stroked)
-    engine.hook_connect('config_changed', partial(on_config_changed, engine))
+
     engine.start()
-    application.run()
-    quitting.wait()
+
+    with patch_stdout():
+        session = PromptSession()
+        while True:
+            try:
+                text = session.prompt('> ')
+            except KeyboardInterrupt:
+                continue
+            except EOFError:
+                break
+            else:
+                print('You entered:', text)
+        print('GoodBye!')
+    
     engine.quit()
+    quitting.wait()
+    return engine.join()
+
+def main_FULL(config):
+    engine = TuiEngine(config, KeyboardEmulation())
+    if not engine.load_config():
+        return 3
+    quitting = Event()
+    application = Application(
+        layout=Layout(root_container),
+        key_bindings=bindings,
+        style=style,
+        mouse_support=True,
+        full_screen=True,
+        before_render=partial(back_channel, engine)
+    )
+    engine.hook_connect('quit', quitting.set)
+    engine.hook_connect('stroked', partial(on_stroked, application))
+    engine.hook_connect('dictionaries_loaded', partial(on_dictionaries_loaded, application, dictionaryCheckboxes))
+    engine.hook_connect('config_changed', partial(on_config_changed, engine, application))
+    engine.start()
+
+    application.run()
+    engine.quit()
+    quitting.wait()
     return engine.join()
