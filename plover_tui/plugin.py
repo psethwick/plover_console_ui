@@ -1,246 +1,125 @@
+import re
 from threading import Event
-from functools import partial
-
-from time import sleep
+from functools import partial, wraps
 
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
 
+
 from plover.registry import registry
 from plover.steno_dictionary import StenoDictionaryCollection
-from prompt_toolkit import application
-from prompt_toolkit.filters import app
-
-from prompt_toolkit import PromptSession
-
-from prompt_toolkit.layout.controls import FormattedTextControl
-
-from prompt_toolkit.patch_stdout import patch_stdout
-from prompt_toolkit import Application
-from prompt_toolkit.shortcuts import input_dialog
-from prompt_toolkit.widgets import RadioList
 
 from prompt_toolkit.application import Application
-from prompt_toolkit.application.current import get_app
-from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
-from prompt_toolkit.layout.containers import Float, HSplit, VSplit, Window
-from prompt_toolkit.layout.dimension import D
+from prompt_toolkit.layout.containers import HSplit, VSplit, Window
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import (
-    Box,
-    Button,
-    Checkbox,
-    Dialog,
-    Frame,
-    Label,
-    MenuContainer,
-    MenuItem,
-    ProgressBar,
-    RadioList,
-    TextArea,
-)
+from prompt_toolkit.widgets import TextArea, Frame
 
 from .tuiengine import TuiEngine
 
-class Stroky:
-    def __init__(self) -> None:
-        self.strokes = ""
+help_text = """
+Type any expression (e.g. "4 + 4") followed by enter to execute.
+Press Control-C to exit.
+"""
 
-    def add(self, stroke: str):
-        self.strokes += stroke + "\n"
+output_field = TextArea(text=help_text, focusable=False)
+paper_tape = TextArea(focusable=False)
+suggestions = TextArea(focusable=False)
+input_field = TextArea(
+    height=1,
+    prompt=">>> ",
+    multiline=False,
+    wrap_lines=False
+)
 
-    def get(self):
-        return self.strokes
-
-strocks = Stroky()
-
-def on_stroked(app, stroke):
-    strocks.add(stroke.rtfcre)
-    app.invalidate()
-
-def accept_yes():
-    get_app().exit(result=True)
-
-
-def accept_no():
-    get_app().exit(result=False)
-
-
-def do_exit():
-    get_app().exit(result=False)
-
-
-yes_button = Button(text="Yes", handler=accept_yes)
-no_button = Button(text="No", handler=accept_no)
-textfield = Frame(Window(content=FormattedTextControl(text=strocks.get)), title="Paper Tape")
-checkbox1 = Checkbox(text="Checkbox")
-checkbox2 = Checkbox(text="Checkbox")
-dictionaryCheckboxes = [checkbox1, checkbox2]
-
-radios = RadioList(
-    values=[
-        ('lol', 'lol')
+container = HSplit(
+    [
+        VSplit([
+            output_field, 
+            HSplit([
+                Frame(paper_tape, title="Paper Tape"),
+                Frame(suggestions, title="Suggestions"),
+            ]),
+        ]),
+        input_field,
     ]
 )
 
-animal_completer = WordCompleter(
-    [
-        "alligator",
-        "ant",
-        "ape",
-        "bat",
-        "bear",
-        "beaver",
-        "bee",
-        "bison",
-        "butterfly",
-        "cat",
-        "chicken",
-        "crocodile",
-        "dinosaur",
-        "dog",
-        "dolphin",
-        "dove",
-        "duck",
-        "eagle",
-        "elephant",
-        "fish",
-        "goat",
-        "gorilla",
-        "kangaroo",
-        "leopard",
-        "lion",
-        "mouse",
-        "rabbit",
-        "rat",
-        "snake",
-        "spider",
-        "turkey",
-        "turtle",
-    ],
-    ignore_case=True,
-)
+# Attach accept handler to the input field. We do this by assigning the
+# handler to the `TextArea` that we created earlier. it is also possible to
+# pass it to the constructor of `TextArea`.
+# NOTE: It's better to assign an `accept_handler`, rather then adding a
+#       custom ENTER key binding. This will automatically reset the input
+#       field and add the strings to the history.
+def accept(engine, buff):
+    # Evaluate "calculator" expression.
+    try:
+        output = engine.config["machine_type"]
+    except BaseException as e:
+        output = "\n\n{}".format(e)
+    new_text = output_field.text + output
 
-root_container = HSplit(
+    # Add text to output buffer.
+    output_field.buffer.document = Document(
+        text=new_text, cursor_position=len(new_text)
+    )
+
+# The key bindings.
+kb = KeyBindings()
+
+@kb.add("c-c")
+@kb.add("c-q")
+def _(event):
+    " Pressing Ctrl-Q or Ctrl-C will exit the user interface. "
+    event.app.exit()
+
+# TODO should maybe find a way to find the window
+tui_window = None
+previous_window = None
+
+@kb.add("c-x")
+def _(event):
+    SetForegroundWindow(previous_window)
+    
+# Style.
+style = Style(
     [
-        VSplit(
-            [
-                Frame(body=Label(text="Left frame\ncontent")),
-                Dialog(title="The custom window", body=Label("hello\ntest")),
-                textfield,
-            ],
-            height=D(),
-        ),
-        VSplit(
-            [
-                Frame(body=ProgressBar(), title="Progress bar"),
-                Frame(
-                    title="Checkbox list",
-                    body=HSplit(dictionaryCheckboxes),
-                ),
-                Frame(title="Radio list", body=radios),
-            ],
-            padding=1,
-        ),
+        ("output-field", "bg:#000044 #ffffff"),
+        ("input-field", "bg:#000000 #ffffff"),
+        ("line", "#004400"),
     ]
 )
 
-root_container = MenuContainer(
-    body=root_container,
-    menu_items=[
-        MenuItem(
-            "File",
-            children=[
-                MenuItem("New"),
-                MenuItem(
-                    "Open",
-                    children=[
-                        MenuItem("From file..."),
-                        MenuItem("From URL..."),
-                        MenuItem(
-                            "Something else..",
-                            children=[
-                                MenuItem("A"),
-                                MenuItem("B"),
-                                MenuItem("C"),
-                                MenuItem("D"),
-                                MenuItem("E"),
-                            ],
-                        ),
-                    ],
-                ),
-                MenuItem("Save"),
-                MenuItem("Save as..."),
-                MenuItem("-", disabled=True),
-                MenuItem("Exit", handler=do_exit),
-            ],
-        ),
-        MenuItem(
-            "Edit",
-            children=[
-                MenuItem("Undo"),
-                MenuItem("Cut"),
-                MenuItem("Copy"),
-                MenuItem("Paste"),
-                MenuItem("Delete"),
-                MenuItem("-", disabled=True),
-                MenuItem("Find"),
-                MenuItem("Find next"),
-                MenuItem("Replace"),
-                MenuItem("Go To"),
-                MenuItem("Select All"),
-                MenuItem("Time/Date"),
-            ],
-        ),
-        MenuItem("View", children=[MenuItem("Status Bar")]),
-        MenuItem("Info", children=[MenuItem("About")]),
-    ],
-    floats=[
-        Float(
-            xcursor=True,
-            ycursor=True,
-            content=CompletionsMenu(max_height=16, scroll_offset=1),
-        ),
-    ],
+# Run application.
+application = Application(
+    layout=Layout(container, focused_element=input_field),
+    key_bindings=kb,
+    style=style,
+    mouse_support=True,
+    full_screen=True,
 )
-
-# Global key bindings.
-bindings = KeyBindings()
-bindings.add("tab")(focus_next)
-bindings.add("s-tab")(focus_previous)
-
-
-style = Style.from_dict(
-    {
-        "window.border": "#888888",
-        "shadow": "bg:#222222",
-        "menu-bar": "bg:#aaaaaa #888888",
-        "menu-bar.selected-item": "bg:#ffffff #000000",
-        "menu": "bg:#888888 #ffffff",
-        "menu.border": "#aaaaaa",
-        "window.border shadow": "#444444",
-        "focused  button": "bg:#880000 #ffffff noinherit",
-        # Styling for Dialog widgets.
-        "button-bar": "bg:#aaaaff",
-    }
-)
-
-
-def back_channel(engine, app: Application):
-    if radios.current_value != engine.config['machine_type']:
-            engine.config = {"machine_type": radios.current_value}
-
 
 
 def show_error(title, message):
-    # TODO probably float a window?
-    # or maybe just have a 'notifications' pane
-    print(title + message)
+    new_text = f"{output_field.buffer.text}\nError: {title} - {message}"
+    output_field.buffer.document = Document(
+        text=new_text, cursor_position=len(new_text)
+    )
+    application.invalidate()
 
+
+def on_stroked(stroke):
+    new_text = f"{paper_tape.text}\n{stroke.rtfcre}"
+    paper_tape.buffer.document = Document(
+        text=new_text, cursor_position=len(new_text)
+    )
+    application.invalidate()
+    
+def on_focus():
+    previous_window = GetForegroundWindow()
+    SetForegroundWindow(tui_window)
 
 # minimum
 # TODO suggestions
@@ -250,88 +129,24 @@ def show_error(title, message):
 # TODO lookup
 # TODO commandline args?
 
-# TODO should maybe find a way to find the window
-tui_window = GetForegroundWindow()
-previous_window = None
 
-def on_lookup():
-    previous_window = GetForegroundWindow()
-    SetForegroundWindow(tui_window)
-
-    sleep(2)
-    SetForegroundWindow(previous_window)
-
-    result = input_dialog(
-        title="Input dialog example", text="Please type your name:"
-    ).run()
-
-
-def on_config_changed(engine, app, config):
-    machine = config["machine_type"]
-    radios.values = [
-        (m, m) for m
-        in sorted(
-            [m.name for m in registry.list_plugins("machine") 
-            if m.name in ['Keyboard', 'Gemini PR']], # could perhaps configure this
-            key=lambda m: m == machine)
-    ]
-    radios.current_value = machine
-    app.invalidate()
-
-def on_dictionaries_loaded(app, checkbs, dicts: StenoDictionaryCollection):
-    pass
-    # print(dicts)
-    # checkbs = [ 
-    #     Checkbox(d.short_path, d.enabled)
-    #     for d in dicts
-    # ]
-    # app.invalidate()
 
 def main(config):
     engine = TuiEngine(config, KeyboardEmulation())
+    input_field.accept_handler = partial(accept, engine)
     if not engine.load_config():
         return 3
     quitting = Event()
-
-    engine.start()
-
-    with patch_stdout():
-        session = PromptSession()
-        while True:
-            try:
-                text = session.prompt('> ')
-            except KeyboardInterrupt:
-                continue
-            except EOFError:
-                break
-            else:
-                print('You entered:', text)
-        print('GoodBye!')
-    
-    engine.quit()
-    quitting.wait()
-    return engine.join()
-
-def main_FULL(config):
-    engine = TuiEngine(config, KeyboardEmulation())
-    if not engine.load_config():
-        return 3
-    quitting = Event()
-    application = Application(
-        layout=Layout(root_container),
-        key_bindings=bindings,
-        style=style,
-        mouse_support=True,
-        full_screen=True,
-        before_render=partial(back_channel, engine)
-    )
     engine.hook_connect('quit', quitting.set)
-    engine.hook_connect('stroked', partial(on_stroked, application))
-    engine.hook_connect('dictionaries_loaded', partial(on_dictionaries_loaded, application, dictionaryCheckboxes))
-    engine.hook_connect('config_changed', partial(on_config_changed, engine, application))
+    engine.hook_connect('stroked', on_stroked)
+    engine.hook_connect('focus', on_focus)
+    #engine.hook_connect('dictionaries_loaded', partial(on_dictionaries_loaded, application, dictionaryCheckboxes))
+    #engine.hook_connect('config_changed', partial(on_config_changed, engine, application))
     engine.start()
 
+    tui_window = GetForegroundWindow() 
     application.run()
+
     engine.quit()
     quitting.wait()
     return engine.join()
