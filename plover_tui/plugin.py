@@ -1,21 +1,27 @@
+from concurrent.futures.thread import ThreadPoolExecutor
 import re
+import asyncio
+from concurrent import futures
 from threading import Event
 from functools import partial, wraps
 
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
 
+from plover import log
 
 from plover.registry import registry
 from plover.steno_dictionary import StenoDictionaryCollection
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.document import Document
+from prompt_toolkit.filters import app
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, VSplit, Window
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea, Frame
+from prompt_toolkit import patch_stdout
 
 from .tuiengine import TuiEngine
 
@@ -93,17 +99,17 @@ style = Style(
 )
 
 # Run application.
+
 application = Application(
     layout=Layout(container, focused_element=input_field),
     key_bindings=kb,
     style=style,
-    mouse_support=True,
+    mouse_support=False,
     full_screen=True,
 )
 
-
 def show_error(title, message):
-    new_text = f"{output_field.buffer.text}\nError: {title} - {message}"
+    new_text = f"{output_field.buffer.text[:1000]}\nError: {title} - {message}"
     output_field.buffer.document = Document(
         text=new_text, cursor_position=len(new_text)
     )
@@ -111,7 +117,7 @@ def show_error(title, message):
 
 
 def on_stroked(stroke):
-    new_text = f"{paper_tape.text}\n{stroke.rtfcre}"
+    new_text = f"{paper_tape[:1000].text}\n{stroke.rtfcre}"
     paper_tape.buffer.document = Document(
         text=new_text, cursor_position=len(new_text)
     )
@@ -130,7 +136,15 @@ def on_focus():
 # TODO commandline args?
 
 
+async def tui(engine, application):
+    loop = asyncio.get_running_loop()
+    executor = ThreadPoolExecutor(max_workers=5)
+    app = asyncio.create_task(application.run_async())
+    e = loop.run_in_executor(executor, engine.start)
+    await asyncio.wait([e, app], return_when=asyncio.ALL_COMPLETED)
 
+
+print("feck")
 def main(config):
     engine = TuiEngine(config, KeyboardEmulation())
     input_field.accept_handler = partial(accept, engine)
@@ -142,11 +156,10 @@ def main(config):
     engine.hook_connect('focus', on_focus)
     #engine.hook_connect('dictionaries_loaded', partial(on_dictionaries_loaded, application, dictionaryCheckboxes))
     #engine.hook_connect('config_changed', partial(on_config_changed, engine, application))
+    #ex.submit(engine.start)
+    #ex.submit(application.run)
+    log.info("starting tui???")
     engine.start()
 
-    tui_window = GetForegroundWindow() 
-    application.run()
-
-    engine.quit()
     quitting.wait()
     return engine.join()
