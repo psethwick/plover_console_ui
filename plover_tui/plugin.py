@@ -1,8 +1,7 @@
-from concurrent.futures.thread import ThreadPoolExecutor
-import re
+from concurrent.futures.process import ProcessPoolExecutor
 import asyncio
 from concurrent import futures
-from threading import Event
+from threading import Event, current_thread
 from functools import partial, wraps
 
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
@@ -12,6 +11,7 @@ from plover import log
 
 from plover.registry import registry
 from plover.steno_dictionary import StenoDictionaryCollection
+from plover.gui_none.engine import Engine
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.document import Document
@@ -62,7 +62,9 @@ container = HSplit(
 def accept(engine, buff):
     # Evaluate "calculator" expression.
     try:
-        output = engine.config["machine_type"]
+        #output = engine.config["machine_type"]
+        output = str(current_thread())
+
     except BaseException as e:
         output = "\n\n{}".format(e)
     new_text = output_field.text + output
@@ -71,6 +73,7 @@ def accept(engine, buff):
     output_field.buffer.document = Document(
         text=new_text, cursor_position=len(new_text)
     )
+    application.invalidate()
 
 # The key bindings.
 kb = KeyBindings()
@@ -106,6 +109,7 @@ application = Application(
     style=style,
     mouse_support=False,
     full_screen=True,
+    enable_page_navigation_bindings=False
 )
 
 def show_error(title, message):
@@ -117,7 +121,7 @@ def show_error(title, message):
 
 
 def on_stroked(stroke):
-    new_text = f"{paper_tape[:1000].text}\n{stroke.rtfcre}"
+    new_text = f"{paper_tape.text[:1000]}\n{stroke.rtfcre}"
     paper_tape.buffer.document = Document(
         text=new_text, cursor_position=len(new_text)
     )
@@ -136,17 +140,9 @@ def on_focus():
 # TODO commandline args?
 
 
-async def tui(engine, application):
-    loop = asyncio.get_running_loop()
-    executor = ThreadPoolExecutor(max_workers=5)
-    app = asyncio.create_task(application.run_async())
-    e = loop.run_in_executor(executor, engine.start)
-    await asyncio.wait([e, app], return_when=asyncio.ALL_COMPLETED)
-
-
-print("feck")
 def main(config):
     engine = TuiEngine(config, KeyboardEmulation())
+    engine.daemon = True
     input_field.accept_handler = partial(accept, engine)
     if not engine.load_config():
         return 3
@@ -156,10 +152,10 @@ def main(config):
     engine.hook_connect('focus', on_focus)
     #engine.hook_connect('dictionaries_loaded', partial(on_dictionaries_loaded, application, dictionaryCheckboxes))
     #engine.hook_connect('config_changed', partial(on_config_changed, engine, application))
-    #ex.submit(engine.start)
-    #ex.submit(application.run)
-    log.info("starting tui???")
+
     engine.start()
+
+    application.run()
 
     quitting.wait()
     return engine.join()
