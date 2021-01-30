@@ -1,27 +1,16 @@
-from concurrent.futures.process import ProcessPoolExecutor
-import asyncio
-from concurrent import futures
-from threading import Event, current_thread
-from functools import partial, wraps
-
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
 
-from plover import log
-
 from plover.registry import registry
 from plover.steno_dictionary import StenoDictionaryCollection
-from plover.gui_none.engine import Engine
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.document import Document
-from prompt_toolkit.filters import app
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, VSplit, Window
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea, Frame
-from prompt_toolkit import patch_stdout
 
 from .tuiengine import TuiEngine
 
@@ -112,6 +101,7 @@ application = Application(
     enable_page_navigation_bindings=False
 )
 
+
 def show_error(title, message):
     new_text = f"{output_field.buffer.text[:1000]}\nError: {title} - {message}"
     output_field.buffer.document = Document(
@@ -126,17 +116,18 @@ def on_stroked(stroke):
         text=new_text, cursor_position=len(new_text)
     )
     application.invalidate()
-    
+
+
 def on_focus():
     previous_window = GetForegroundWindow()
     SetForegroundWindow(tui_window)
 
 # minimum
 # TODO suggestions
+# TODO lookup
+# TODO dictionary update
 # TODO enable/disable
 # TODO choose machine
-# TODO dictionary update
-# TODO lookup
 # TODO commandline args?
 
 
