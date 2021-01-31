@@ -12,7 +12,7 @@ def tails(ls):
         yield ls[i:]
 
 
-def on_translated(engine, model, old, new):
+def on_translated(engine, on_output, old, new):
     # Check for new output.
     for a in reversed(new):
         if a.text and not a.text.isspace():
@@ -33,7 +33,7 @@ def on_translated(engine, model, old, new):
         suggestion_list = [Suggestion(split_words[-1], [])]
 
     if suggestion_list:
-        model.add(suggestion_list)
+        on_output(format_suggestions(suggestion_list))
 
 
 def format_suggestions(suggestions):
@@ -42,17 +42,4 @@ def format_suggestions(suggestions):
         results.append(r.text + ":")
         for s in r.steno_list:
             results.append("   " + "/".join(s))
-    return [(b, a) for (a, b) in enumerate(results)]
-
-
-class SuggestionsModel():
-    def __init__(self):
-        self.suggestions = []
-
-    def add(self, suggestions):
-        self.suggestions[0:0] = suggestions
-        if (len(self.suggestions) > 100):
-            del self.suggestions[50:]
-
-    def get(self):
-        return format_suggestions(self.suggestions)
+    return "\n".join(results)

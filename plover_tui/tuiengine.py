@@ -3,6 +3,7 @@ from threading import Thread, current_thread
 
 from plover.engine import StenoEngine
 
+
 class TuiEngine(StenoEngine, Thread):
 
     def __init__(self, config, keyboard_emulation):
@@ -20,4 +21,3 @@ class TuiEngine(StenoEngine, Thread):
     def join(self):
         Thread.join(self)
         return self.code
-
