@@ -1,6 +1,8 @@
 from plover.translation import unescape_translation
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
+from plover import log
+from plover.log import __logger
 
 from plover.registry import registry
 from plover.steno_dictionary import StenoDictionaryCollection
@@ -15,6 +17,7 @@ from prompt_toolkit.widgets import TextArea, Frame
 
 from .tuiengine import TuiEngine
 from .suggestions import on_translated, format_suggestions
+from .notification import TuiNotificationHandler
 from functools import partial
 
 from threading import Event
@@ -137,14 +140,20 @@ def on_stroked(on_output, stroke):
 
 
 def show_error(title, message):
-    if application.is_running:
-        output_to_buffer(output_field.buffer, f"{title} - {message}")
-        application.invalidate()
-    else:
-        print(f"{title}: {message}")
+    # this only gets called if gui.main fails
+    # so we can't rely on prompt application stuff
+    # printing is fine
+    print(f"{title}: {message}")
 
 
 def main(config):
+    # this screws things up
+    # hax tho
+    log.remove_handler(__logger._print_handler)
+
+    # lets set up something better
+    log.add_handler(TuiNotificationHandler(partial(output_to_buffer, output_field.buffer)))
+
     engine = TuiEngine(config, KeyboardEmulation())
     engine.daemon = True
     input_field.accept_handler = partial(accept, engine)
