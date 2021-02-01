@@ -2,6 +2,7 @@ from plover.translation import unescape_translation
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
 from plover import log
+# this will never come back to bite me
 from plover.log import __logger
 
 from plover.registry import registry
@@ -21,6 +22,25 @@ from .notification import TuiNotificationHandler
 from functools import partial
 
 from threading import Event
+
+class Focus():
+    def __init__(self) -> None:
+        self._tui = GetForegroundWindow()
+        self._prev = None
+    
+    def reset_tui(self) -> None:
+        self._tui = GetForegroundWindow()
+
+    def set_prev(self):
+        self._prev = GetForegroundWindow()
+
+    def prev(self):
+        SetForegroundWindow(self._prev)
+    
+    def tui(self):
+        SetForegroundWindow(self._tui)
+    
+focus = Focus()
 
 help_text = """
 Type any expression (e.g. "4 + 4") followed by enter to execute.
@@ -67,14 +87,9 @@ def _(event):
     " Pressing Ctrl-Q or Ctrl-C will exit the user interface. "
     event.app.exit()
 
-# TODO should maybe find a way to find the window
-tui_window = None
-previous_window = None
-
-@kb.add("c-x")
+@kb.add("escape", eager=True)
 def _(event):
-    SetForegroundWindow(previous_window)
-
+    focus.prev()
 
 # Style.
 style = Style(
@@ -96,11 +111,6 @@ application = Application(
     enable_page_navigation_bindings=False
 )
 
-
-def on_focus():
-    previous_window = GetForegroundWindow()
-    SetForegroundWindow(tui_window)
-
 # minimum
 # TODO lookup
 # TODO dictionary update
@@ -121,8 +131,8 @@ def output_to_buffer(buffer, text):
 def accept(engine, buff):
     # Evaluate "calculator" expression.
     try:
-        output = f"Unknown command '{input_field.text}'"
-        words = input_field.text.split()
+        output = f"Unknown command '{buff.text}'"
+        words = buff.text.split()
         if len(words) > 0:
             if words[0].lower() == "quit":
                 application.exit()
@@ -137,6 +147,14 @@ def accept(engine, buff):
 
 def on_stroked(on_output, stroke):
     on_output(stroke.rtfcre)
+
+def on_focus():
+    focus.set_prev()
+    focus.tui()
+
+def on_add_translation():
+    focus.set_prev()
+    focus.tui()
 
 
 def show_error(title, message):
@@ -171,6 +189,8 @@ def main(config):
                                 engine,
                                 partial(output_to_buffer,
                                         suggestions.buffer)))
+
+    engine.hook_connect('add_translation', on_add_translation)
 
     engine.start()
 
