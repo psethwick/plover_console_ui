@@ -1,6 +1,5 @@
 from plover.translation import unescape_translation
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
-from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
 from plover import log
 # this will never come back to bite me
 from plover.log import __logger
@@ -11,44 +10,32 @@ from plover.steno_dictionary import StenoDictionaryCollection
 from prompt_toolkit.application import Application
 from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.containers import HSplit, VSplit, Window
+from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer, FloatContainer, Window, to_container
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import TextArea, Frame
+from prompt_toolkit.widgets import TextArea, Frame, Label
 
 from .tuiengine import TuiEngine
 from .suggestions import on_translated, format_suggestions
 from .notification import TuiNotificationHandler
+from .focus import Focus
+
 from functools import partial
 
 from threading import Event
 
-class Focus():
-    def __init__(self) -> None:
-        self._tui = GetForegroundWindow()
-        self._prev = None
-    
-    def reset_tui(self) -> None:
-        self._tui = GetForegroundWindow()
-
-    def set_prev(self):
-        self._prev = GetForegroundWindow()
-
-    def prev(self):
-        SetForegroundWindow(self._prev)
-    
-    def tui(self):
-        SetForegroundWindow(self._tui)
-    
 focus = Focus()
 
+# if I do a multi-level prompty thing
+# this should report current command descriptions
 help_text = """
 Type any expression (e.g. "4 + 4") followed by enter to execute.
 Press Control-C to exit.
 """
 
 
-output_field = TextArea(text=help_text, focusable=False)
+console = TextArea(text=help_text, focusable=False)
 paper_tape = TextArea(focusable=False)
 suggestions = TextArea(focusable=False)
 input_field = TextArea(
@@ -56,16 +43,49 @@ input_field = TextArea(
     # TODO this should take a callable
     prompt=">>> ",
     multiline=False,
-    wrap_lines=False
+    wrap_lines=False,
 )
+
+class TuiLayout:
+    def __init__(self) -> None:
+        self.console = Frame(console, title="Console")
+        self.tape = Frame(paper_tape, title="Paper Tape")
+        self.suggestions = Frame(suggestions, title="Suggestions")
+        self.items = [
+            self.console
+        ]
+    
+    def __call__(self):
+        return VSplit(self.items)        
+
+    def get(self):
+        return VSplit(self.items)
+    
+    def toggle_tape(self):
+        if self.tape in self.items:
+            self.items.remove(self.tape)
+            return "paper tape off"
+        else:
+            self.items.append(self.tape)
+            return "paper tape on"
+
+    def toggle_suggestions(self):
+        if self.suggestions in self.items:
+            self.items.remove(self.suggestions)
+            return "suggestions off"
+        else:
+            self.items.append(self.suggestions)
+            return "suggestions on"
+
+
+
+d = TuiLayout()
+
+top_bit = DynamicContainer(d)
 
 container = HSplit(
     [
-        VSplit([
-            Frame(output_field, title="Plover"),
-            Frame(paper_tape, title="Paper Tape"),
-            Frame(suggestions, title="Suggestions"),
-        ]),
+        top_bit,
         input_field,
     ]
 )
@@ -139,10 +159,18 @@ def accept(engine, buff):
             if words[0] == "lookup":
                 lookup = unescape_translation(" ".join(words[1:]))
                 output = format_suggestions(engine.get_suggestions(lookup))
+            if words[0] == "tape":
+                output = d.toggle_tape()
+            if words[0] == "suggestions":
+                output = d.toggle_suggestions()
+            if words[0] == "machine":
+                output = engine.config["machine_type"] = words[1:]
+                
+
 
     except BaseException as e:
         output = "\n\n{}".format(e)
-    output_to_buffer(output_field.buffer, output)
+    output_to_buffer(console.buffer, output)
 
 
 def on_stroked(on_output, stroke):
@@ -163,6 +191,8 @@ def show_error(title, message):
     # printing is fine
     print(f"{title}: {message}")
 
+def status_bar_text(engine) -> str:
+    return engine.config["machine_type"]
 
 def main(config):
     # this screws things up
@@ -170,11 +200,14 @@ def main(config):
     log.remove_handler(__logger._print_handler)
 
     # lets set up something better
-    log.add_handler(TuiNotificationHandler(partial(output_to_buffer, output_field.buffer)))
+    log.add_handler(TuiNotificationHandler(partial(output_to_buffer, console.buffer)))
 
     engine = TuiEngine(config, KeyboardEmulation())
     engine.daemon = True
+
     input_field.accept_handler = partial(accept, engine)
+    container.children.insert(0, to_container(Label(partial(status_bar_text, engine))))
+
     if not engine.load_config():
         return 3
     quitting = Event()
