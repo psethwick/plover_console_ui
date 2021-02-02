@@ -58,24 +58,23 @@ class TuiLayout:
     def __call__(self):
         return VSplit(self.items)        
 
-    def get(self):
-        return VSplit(self.items)
-    
     def toggle_tape(self):
-        if self.tape in self.items:
-            self.items.remove(self.tape)
-            return "paper tape off"
-        else:
-            self.items.append(self.tape)
-            return "paper tape on"
+        return "Tape: " + self._toggle(self.tape)
+
+    def toggle_console(self):
+        return "Console: " + self._toggle(self.console)
 
     def toggle_suggestions(self):
-        if self.suggestions in self.items:
-            self.items.remove(self.suggestions)
-            return "suggestions off"
+        return "Suggestions: " + self._toggle(self.suggestions)
+        
+    def _toggle(self, item):
+        if item in self.items:
+            self.items.remove(item)
+            return "off"
         else:
-            self.items.append(self.suggestions)
-            return "suggestions on"
+            self.items.append(item)
+            return "on"
+
 
 
 
@@ -83,20 +82,15 @@ d = TuiLayout()
 
 top_bit = DynamicContainer(d)
 
-container = HSplit(
-    [
-        top_bit,
-        input_field,
-    ]
+container = FloatContainer(
+    HSplit(
+        [
+            top_bit,
+            input_field,
+        ]
+    ),
+    floats=[]
 )
-
-#
-# Attach accept handler to the input field. We do this by assigning the
-# handler to the `TextArea` that we created earlier. it is also possible to
-# pass it to the constructor of `TextArea`.
-# NOTE: It's better to assign an `accept_handler`, rather then adding a
-#       custom ENTER key binding. This will automatically reset the input
-#       field and add the strings to the history.
 
 # The key bindings.
 kb = KeyBindings()
@@ -112,13 +106,13 @@ def _(event):
     focus.prev()
 
 # Style.
-style = Style(
-    [
-        ("output-field", "bg:#000044 #ffffff"),
-        ("input-field", "bg:#000000 #ffffff"),
-        ("line", "#004400"),
-    ]
+style = Style.from_dict(
+    {
+        "status": "reverse",
+        "shadow": "bg:#440044",
+    }
 )
+
 
 # Run application.
 
@@ -132,11 +126,9 @@ application = Application(
 )
 
 # minimum
-# TODO lookup
 # TODO dictionary update
-# TODO enable/disable
-# TODO choose machine
-# TODO commandline args?
+# TODO tui options?
+# TODO save command
 
 
 def output_to_buffer(buffer, text):
@@ -156,10 +148,10 @@ def accept(engine, buff):
         if len(words) > 0:
             if words[0].lower() == "quit":
                 output = "Exiting..."
-                application.exit()
+                application.exit(0)
             if words[0] == "lookup":
                 lookup = unescape_translation(" ".join(words[1:]))
-                output = f"Lookup - "
+                output = f"Lookup\n------\n"
                 suggestions = format_suggestions(engine.get_suggestions(lookup))
                 if suggestions:
                     output += suggestions
@@ -169,11 +161,14 @@ def accept(engine, buff):
                 output = d.toggle_tape()
             if words[0] == "suggestions":
                 output = d.toggle_suggestions()
+            if words[0] == "console":
+                output = d.toggle_console()
             if words[0] == "output":
                 if engine.output:
                     engine.output = False
                 else:
                     engine.output = True
+                output = "Output: " + str(engine.output)
             if words[0] == "machine":
                 new_machine = " ".join(words[1:])
                 output = f"Setting machine to {new_machine}"
@@ -204,9 +199,12 @@ def show_error(title, message):
 
 def status_bar_text(engine) -> str:
     return \
-        "Machine: " + engine.config["machine_type"] + \
-        "Enabled: " + str(engine.output) + \
-        "System: " + engine.config["system_type"]
+        " | Plover" + \
+        " | Machine: " + engine.config["machine_type"] + \
+        " | Output: " + str(engine.output) + \
+        " | System: " + engine.config["system_name"] + \
+        " |"
+
 
 
 def main(config):
@@ -221,7 +219,8 @@ def main(config):
     engine.daemon = True
 
     input_field.accept_handler = partial(accept, engine)
-    container.children.insert(0, to_container(Label(partial(status_bar_text, engine))))
+
+    container.content.children.append(to_container(Label(partial(status_bar_text, engine), style="class:status")))
 
     if not engine.load_config():
         return 3
@@ -242,9 +241,9 @@ def main(config):
 
     engine.start()
 
-    application.run()
+    code = application.run()
 
     engine.quit()
-
     quitting.wait()
-    return engine.join()
+    engine.join()
+    return code

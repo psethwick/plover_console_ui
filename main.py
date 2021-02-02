@@ -82,6 +82,8 @@ def main():
             config = Config()
             config.target_file = CONFIG_FILE
             code = gui.main(config)
+            with open(config.target_file, 'wb') as f:
+                config.save(f)
     except processlock.LockNotAcquiredException:
         gui.show_error('Error', 'Another instance of Plover is already running.')
         code = 1
