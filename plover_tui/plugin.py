@@ -149,8 +149,8 @@ def output_to_buffer(buffer, text):
 
 
 def accept(engine, buff):
-    # Evaluate "calculator" expression.
     try:
+        # all this shizzle should move to a class or something
         output = f"Unknown command '{buff.text}'"
         words = buff.text.split()
         if len(words) > 0:
@@ -158,15 +158,22 @@ def accept(engine, buff):
                 application.exit()
             if words[0] == "lookup":
                 lookup = unescape_translation(" ".join(words[1:]))
-                output = format_suggestions(engine.get_suggestions(lookup))
+                output = f"Lookup - "
+                suggestions = format_suggestions(engine.get_suggestions(lookup))
+                if suggestions:
+                    output += suggestions
+                else:
+                    output += f"'{lookup}' not found"
             if words[0] == "tape":
                 output = d.toggle_tape()
             if words[0] == "suggestions":
                 output = d.toggle_suggestions()
-            if words[0] == "machine":
-                output = engine.config["machine_type"] = words[1:]
-                
+            if words[0] == "output":
 
+            if words[0] == "machine":
+                new_machine = " ".join(words[1:])
+                output = f"Setting machine to {new_machine}"
+                engine.config = {"machine_type": new_machine}
 
     except BaseException as e:
         output = "\n\n{}".format(e)
