@@ -1,3 +1,4 @@
+from typing import List
 from plover.translation import unescape_translation
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover import log
@@ -7,7 +8,7 @@ from plover.log import __logger
 from plover.registry import registry
 from plover.steno_dictionary import StenoDictionaryCollection
 
-from prompt_toolkit.application import Application
+from prompt_toolkit.application import Application, get_app
 from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer, FloatContainer, Float, to_container, Window
@@ -51,12 +52,16 @@ class TuiLayout:
         self.console = Frame(console, title="Console")
         self.tape = Frame(paper_tape, title="Paper Tape")
         self.suggestions = Frame(suggestions, title="Suggestions")
-        self.items = [
+        self.outputs = [
             self.console
         ]
+        self.float = Window()
     
-    def __call__(self):
-        return VSplit(self.items)        
+    def __call__(self, type):
+        if type == 'outputs':
+            return VSplit(self.outputs)        
+        if type == 'float':
+            return self.float
 
     def toggle_tape(self):
         return "Tape: " + self._toggle(self.tape)
@@ -68,11 +73,11 @@ class TuiLayout:
         return "Suggestions: " + self._toggle(self.suggestions)
         
     def _toggle(self, item):
-        if item in self.items:
-            self.items.remove(item)
+        if item in self.outputs:
+            self.outputs.remove(item)
             return "off"
         else:
-            self.items.append(item)
+            self.outputs.append(item)
             return "on"
 
 
@@ -80,17 +85,16 @@ class TuiLayout:
 
 d = TuiLayout()
 
-top_bit = DynamicContainer(d)
-
 container = FloatContainer(
     HSplit(
         [
-            top_bit,
+            DynamicContainer(partial(d, "outputs")),
             input_field,
         ]
     ),
-    floats=[],
-    z_index=0
+    floats=[
+        Float(DynamicContainer(partial(d, "float")))
+    ]
 )
 
 # The key bindings.
@@ -150,16 +154,14 @@ def accept(engine, buff):
             if words[0].lower() == "quit":
                 output = "Exiting..."
                 application.exit(0)
-            if words[0] == "test":
-                float = Float(
-                    Frame(
-                        Window(FormattedTextControl("testicals"), width=10, height=2),
-                        style="bg:#44ffff #ffffff",
-                    ),
-                    left=0,
-                    z_index=1
-                ),
-                container.floats.append(float)
+            if words[0] == "floaton":
+                w = Window(FormattedTextControl("testicals"), width=10, height=2)
+                d.float = Frame(
+                        w
+                    )
+                get_app().layout.focus(w)
+            if words[0] == "floatoff":
+                d.float = Window()
             if words[0] == "lookup":
                 lookup = unescape_translation(" ".join(words[1:]))
                 output = f"Lookup\n------\n"
