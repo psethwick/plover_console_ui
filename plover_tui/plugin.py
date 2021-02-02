@@ -155,6 +155,7 @@ def accept(engine, buff):
         words = buff.text.split()
         if len(words) > 0:
             if words[0].lower() == "quit":
+                output = "Exiting..."
                 application.exit()
             if words[0] == "lookup":
                 lookup = unescape_translation(" ".join(words[1:]))
@@ -169,7 +170,10 @@ def accept(engine, buff):
             if words[0] == "suggestions":
                 output = d.toggle_suggestions()
             if words[0] == "output":
-
+                if engine.output:
+                    engine.output = False
+                else:
+                    engine.output = True
             if words[0] == "machine":
                 new_machine = " ".join(words[1:])
                 output = f"Setting machine to {new_machine}"
@@ -199,7 +203,11 @@ def show_error(title, message):
     print(f"{title}: {message}")
 
 def status_bar_text(engine) -> str:
-    return engine.config["machine_type"]
+    return \
+        "Machine: " + engine.config["machine_type"] + \
+        "Enabled: " + str(engine.output) + \
+        "System: " + engine.config["system_type"]
+
 
 def main(config):
     # this screws things up
