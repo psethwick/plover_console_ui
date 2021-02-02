@@ -10,7 +10,7 @@ from plover.steno_dictionary import StenoDictionaryCollection
 from prompt_toolkit.application import Application
 from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer, FloatContainer, Window, to_container
+from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer, FloatContainer, Float, to_container, Window
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
@@ -89,7 +89,8 @@ container = FloatContainer(
             input_field,
         ]
     ),
-    floats=[]
+    floats=[],
+    z_index=0
 )
 
 # The key bindings.
@@ -149,6 +150,16 @@ def accept(engine, buff):
             if words[0].lower() == "quit":
                 output = "Exiting..."
                 application.exit(0)
+            if words[0] == "test":
+                float = Float(
+                    Frame(
+                        Window(FormattedTextControl("testicals"), width=10, height=2),
+                        style="bg:#44ffff #ffffff",
+                    ),
+                    left=0,
+                    z_index=1
+                ),
+                container.floats.append(float)
             if words[0] == "lookup":
                 lookup = unescape_translation(" ".join(words[1:]))
                 output = f"Lookup\n------\n"
