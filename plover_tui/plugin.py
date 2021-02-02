@@ -8,6 +8,7 @@ from plover.log import __logger
 from plover.registry import registry
 from plover.steno_dictionary import StenoDictionaryCollection
 
+from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.application import Application, get_app
 from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
@@ -15,7 +16,7 @@ from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer, F
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import TextArea, Frame, Label
+from prompt_toolkit.widgets import TextArea, Frame, Label, Dialog
 
 from .tuiengine import TuiEngine
 from .suggestions import on_translated, format_suggestions
@@ -104,7 +105,7 @@ kb = KeyBindings()
 @kb.add("c-q")
 def _(event):
     " Pressing Ctrl-Q or Ctrl-C will exit the user interface. "
-    event.app.exit()
+    event.app.exit(0)
 
 @kb.add("escape", eager=True)
 def _(event):
@@ -155,11 +156,26 @@ def accept(engine, buff):
                 output = "Exiting..."
                 application.exit(0)
             if words[0] == "floaton":
-                w = Window(FormattedTextControl("testicals"), width=10, height=2)
-                d.float = Frame(
-                        w
-                    )
-                get_app().layout.focus(w)
+                # w = Window(FormattedTextControl("testicals"), width=10, height=2)
+                # d.float = Frame(
+                #         w
+                #     )
+
+                textfield = TextArea()
+
+                dialog = Dialog(
+                    title="Add Translation",
+                    body=HSplit(
+                        [
+                            Label(text="LAIBEL", dont_extend_height=True),
+                            textfield,
+                        ],
+                        #padding=D(preferred=1, max=1),
+                    ),
+                    with_background=True,
+                )
+                d.float = dialog
+                get_app().layout.focus(dialog)
             if words[0] == "floatoff":
                 d.float = Window()
             if words[0] == "lookup":
@@ -202,6 +218,32 @@ def on_focus():
 def on_add_translation():
     focus.set_prev()
     focus.tui()
+    textfield = TextArea()
+
+    dialog = Dialog(
+        title="Add Translation",
+        body=HSplit(
+            [
+                VSplit(
+                    [
+                        HSplit([
+                            Label("Strokes: "),
+                            textfield,
+                        ]),
+                        HSplit([
+                                Label("Translation: "),
+                                textfield,
+
+                        ]),
+                    ]
+                )
+            ],
+            padding=D(preferred=1, max=1),
+        ),
+        with_background=True,
+    )
+    d.float = dialog
+    get_app().layout.focus(dialog)
 
 
 def show_error(title, message):
