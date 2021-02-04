@@ -1,27 +1,27 @@
-from typing import List
 from plover.translation import unescape_translation
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover import log
 # this will never come back to bite me
 from plover.log import __logger
 
+from plover.config import Config
 from plover.registry import registry
 from plover.steno_dictionary import StenoDictionaryCollection
+from prompt_toolkit.buffer import Buffer
 
-from prompt_toolkit.layout.dimension import Dimension as D
 from prompt_toolkit.application import Application, get_app
 from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer, FloatContainer, Float, to_container, Window
+from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import TextArea, Frame, Label, Dialog
+from prompt_toolkit.widgets import TextArea, Dialog
 
 from .tuiengine import TuiEngine
 from .suggestions import on_translated, format_suggestions
 from .notification import TuiNotificationHandler
 from .focus import Focus
+from .layout import TuiLayout
 
 from functools import partial
 
@@ -48,55 +48,12 @@ input_field = TextArea(
     wrap_lines=False,
 )
 
-class TuiLayout:
-    def __init__(self) -> None:
-        self.console = Frame(console, title="Console")
-        self.tape = Frame(paper_tape, title="Paper Tape")
-        self.suggestions = Frame(suggestions, title="Suggestions")
-        self.outputs = [
-            self.console
-        ]
-        self.float = Window()
-    
-    def __call__(self, type):
-        if type == 'outputs':
-            return VSplit(self.outputs)        
-        if type == 'float':
-            return self.float
-
-    def toggle_tape(self):
-        return "Tape: " + self._toggle(self.tape)
-
-    def toggle_console(self):
-        return "Console: " + self._toggle(self.console)
-
-    def toggle_suggestions(self):
-        return "Suggestions: " + self._toggle(self.suggestions)
-        
-    def _toggle(self, item):
-        if item in self.outputs:
-            self.outputs.remove(item)
-            return "off"
-        else:
-            self.outputs.append(item)
-            return "on"
 
 
 
+layout = TuiLayout(input_field, console, paper_tape, suggestions)
 
-d = TuiLayout()
-
-container = FloatContainer(
-    HSplit(
-        [
-            DynamicContainer(partial(d, "outputs")),
-            input_field,
-        ]
-    ),
-    floats=[
-        Float(DynamicContainer(partial(d, "float")))
-    ]
-)
+container = DynamicContainer(layout)
 
 # The key bindings.
 kb = KeyBindings()
@@ -134,7 +91,6 @@ application = Application(
 # minimum
 # TODO dictionary update
 # TODO tui options?
-# TODO save command
 
 
 def output_to_buffer(buffer, text):
@@ -142,43 +98,21 @@ def output_to_buffer(buffer, text):
     buffer.document = Document(
         text=o, cursor_position=len(o)
     )
-    # todo perhaps pass this in
-    application.invalidate()
+    get_app().invalidate()
 
 
-def accept(engine, buff):
+def accept(engine: TuiEngine, config: Config, buff: Buffer):
     try:
+        # TODO
         # all this shizzle should move to a class or something
+        # probably combined with the prompt state I wanna make
         output = f"Unknown command '{buff.text}'"
         words = buff.text.split()
         if len(words) > 0:
             if words[0].lower() == "quit":
                 output = "Exiting..."
                 application.exit(0)
-            if words[0] == "floaton":
-                # w = Window(FormattedTextControl("testicals"), width=10, height=2)
-                # d.float = Frame(
-                #         w
-                #     )
-
-                textfield = TextArea()
-
-                dialog = Dialog(
-                    title="Add Translation",
-                    body=HSplit(
-                        [
-                            Label(text="LAIBEL", dont_extend_height=True),
-                            textfield,
-                        ],
-                        #padding=D(preferred=1, max=1),
-                    ),
-                    with_background=True,
-                )
-                d.float = dialog
-                get_app().layout.focus(dialog)
-            if words[0] == "floatoff":
-                d.float = Window()
-            if words[0] == "lookup":
+            if words[0] == "lookup": 
                 lookup = unescape_translation(" ".join(words[1:]))
                 output = f"Lookup\n------\n"
                 suggestions = format_suggestions(engine.get_suggestions(lookup))
@@ -187,11 +121,15 @@ def accept(engine, buff):
                 else:
                     output += f"'{lookup}' not found"
             if words[0] == "tape":
-                output = d.toggle_tape()
+                output = layout.toggle_tape()
             if words[0] == "suggestions":
-                output = d.toggle_suggestions()
+                output = layout.toggle_suggestions()
             if words[0] == "console":
-                output = d.toggle_console()
+                output = layout.toggle_console()
+            if words[0] == "save":
+                output = "Saving config..."
+                with open(config.target_file, 'wb') as f:
+                    config.save(f)
             if words[0] == "output":
                 if engine.output:
                     engine.output = False
@@ -215,34 +153,33 @@ def on_focus():
     focus.set_prev()
     focus.tui()
 
-def on_add_translation():
+def on_add_translation(engine):
     focus.set_prev()
     focus.tui()
-    textfield = TextArea()
+    strokes = TextArea(prompt="Strokes:")
+    output_to_buffer(strokes.buffer, "testing")
+    translation = TextArea(prompt="Output: ")
 
-    dialog = Dialog(
+    output = TextArea(focusable=False)
+#   maybe~ buttons
+    dialog = Dialog( # maybe style this different
         title="Add Translation",
-        body=HSplit(
+        body=VSplit(
             [
-                VSplit(
+                HSplit(
                     [
-                        HSplit([
-                            Label("Strokes: "),
-                            textfield,
-                        ]),
-                        HSplit([
-                                Label("Translation: "),
-                                textfield,
-
-                        ]),
+                        strokes,
+                        translation,
                     ]
-                )
+                ),
+                output
             ],
-            padding=D(preferred=1, max=1),
+            #padding=D(preferred=1, max=1),
         ),
-        with_background=True,
+        width=40
+        #with_background=True,
     )
-    d.float = dialog
+    layout.float = dialog
     get_app().layout.focus(dialog)
 
 
@@ -262,10 +199,13 @@ def status_bar_text(engine) -> str:
 
 
 
-def main(config):
+def main(config: Config):
     # this screws things up
     # hax tho
     log.remove_handler(__logger._print_handler)
+
+    # mor hax ... I don't wanna see QT notifications
+    __logger._platform_handler = None
 
     # lets set up something better
     log.add_handler(TuiNotificationHandler(partial(output_to_buffer, console.buffer)))
@@ -273,9 +213,10 @@ def main(config):
     engine = TuiEngine(config, KeyboardEmulation())
     engine.daemon = True
 
-    input_field.accept_handler = partial(accept, engine)
+    input_field.accept_handler = partial(accept, engine, config)
 
-    container.content.children.append(to_container(Label(partial(status_bar_text, engine), style="class:status")))
+    layout.load_status(partial(status_bar_text, engine))
+
 
     if not engine.load_config():
         return 3
@@ -292,7 +233,7 @@ def main(config):
                                 partial(output_to_buffer,
                                         suggestions.buffer)))
 
-    engine.hook_connect('add_translation', on_add_translation)
+    engine.hook_connect('add_translation', partial(on_add_translation, engine))
 
     engine.start()
 
