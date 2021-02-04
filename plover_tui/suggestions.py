@@ -33,10 +33,6 @@ def on_translated(engine: TuiEngine, on_output, old, new):
         phrase = ''.join(phrase)
         suggestion_list.extend(engine.get_suggestions(phrase))
 
-    # this only shows the word that was output if there's no
-    #if not suggestion_list and split_words:
-        #suggestion_list = [Suggestion(split_words[-1], [])]
-
     if suggestion_list:
         on_output(format_suggestions(suggestion_list))
 
