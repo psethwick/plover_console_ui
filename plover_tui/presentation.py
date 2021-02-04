@@ -11,7 +11,8 @@ def output_to_buffer(buffer, text):
     get_app().invalidate()
 
 class TuiLayout:
-    def __init__(self) -> None:
+    def __init__(self, focus) -> None:
+        self.focus = focus
         self.input_field = TextArea(
                 height=1,
                 # TODO this should take a callable
@@ -48,9 +49,8 @@ class TuiLayout:
         self.container.content.children \
             .append(to_container(Label(status_callable, style="class:status")))
 
-    def output_to_tape(self, stroke):
-        # TODO space out the tape properly
-        output_to_buffer(self.tape.body.buffer, stroke.rtfcre)
+    def output_to_tape(self, text):
+        output_to_buffer(self.tape.body.buffer, text)
 
     def output_to_console(self, text):
         output_to_buffer(self.console.body.buffer, text)
@@ -74,3 +74,37 @@ class TuiLayout:
         else:
             self.outputs.append(item)
             return "on"
+
+    def on_focus(self):
+        self.focus.set_prev()
+        self.focus.tui()
+
+    def on_add_translation(self, engine):
+        self.focus.set_prev()
+        self.focus.tui()
+        strokes = TextArea(prompt="Strokes:")
+        output_to_buffer(strokes.buffer, "testing")
+        translation = TextArea(prompt="Output: ")
+
+        output = TextArea(focusable=False)
+    #   maybe~ buttons
+        dialog = Dialog( # maybe style this different
+            title="Add Translation",
+            body=VSplit(
+                [
+                    HSplit(
+                        [
+                            strokes,
+                            translation,
+                        ]
+                    ),
+                    output
+                ],
+                #padding=D(preferred=1, max=1),
+            ),
+            width=40
+            #with_background=True,
+        )
+        self.float = dialog
+        get_app().layout.focus(dialog)
+

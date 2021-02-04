@@ -4,9 +4,6 @@ from plover.formatting import RetroFormatter
 from plover.suggestions import Suggestion
 from plover import log
 
-from .tuiengine import TuiEngine
-
-
 WORD_RX = re.compile(r'(?:\w+|[^\w\s]+)\s*')
 
 
@@ -15,7 +12,7 @@ def tails(ls):
         yield ls[i:]
 
 
-def on_translated(engine: TuiEngine, on_output, old, new):
+def on_translated(engine, on_output, old, new):
     # Check for new output.
     for a in reversed(new):
         if a.text and not a.text.isspace():
@@ -42,5 +39,5 @@ def format_suggestions(suggestions):
     for r in suggestions:
         results.append(r.text + ":")
         for s in r.steno_list:
-            results.append("   " + "/".join(s))
+            results.append("    " + "/".join(s))
     return "\n".join(results)
