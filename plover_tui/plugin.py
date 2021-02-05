@@ -7,13 +7,12 @@ from plover.config import Config
 # this will never come back to bite me
 from plover.log import __logger
 
-
-from prompt_toolkit.application import Application, get_app
+from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer
+from prompt_toolkit.layout.containers import DynamicContainer
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.processors import BeforeInput
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets import TextArea, Dialog
 
 from .tuiengine import TuiEngine
 from .notification import TuiNotificationHandler
@@ -87,14 +86,18 @@ def main(config: Config):
 
     if not engine.load_config():
         return 3
+
+    cmder = Commander(engine, layout)
+
+    layout.input_field.control.input_processors.append(
+                BeforeInput(cmder.prompt, style="class:text-area.prompt"),
+    )
+
+    layout.input_field.accept_handler = cmder
+    layout.status_bar.text = partial(status_bar_text, engine)
+
     quitting = Event()
-    
-    layout.input_field.accept_handler = Commander(engine, layout)
-
-    layout.load_status(partial(status_bar_text, engine))
-
     engine.hook_connect('quit', quitting.set)
-
     engine.start()
 
     code = application.run()

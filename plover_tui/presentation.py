@@ -1,3 +1,4 @@
+from prompt_toolkit.key_binding.key_bindings import key_binding
 from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer, FloatContainer, Float, to_container, Window
 from prompt_toolkit.widgets import TextArea, Frame, Label, Dialog
 from prompt_toolkit.document import Document
@@ -15,11 +16,11 @@ class TuiLayout:
         self.focus = focus
         self.input_field = TextArea(
                 height=1,
-                # TODO this should take a callable
-                prompt=">>> ",
                 multiline=False,
                 wrap_lines=False,
             )
+
+        self.status_bar = Label("Loading status bar...", style="class:status")
 
         self.console = Frame(TextArea(focusable=False), title="Console")
         self.tape = Frame(TextArea(focusable=False), title="Paper Tape")
@@ -33,6 +34,7 @@ class TuiLayout:
                 [
                     DynamicContainer(lambda: VSplit(self.outputs)),
                     self.input_field,
+                    self.status_bar
                 ]
             ),
             floats=[
@@ -43,11 +45,6 @@ class TuiLayout:
     
     def __call__(self):
         return self.container
-
-    # TODO hm this could be better, not sure who should own what
-    def load_status(self, status_callable):
-        self.container.content.children \
-            .append(to_container(Label(status_callable, style="class:status")))
 
     def output_to_tape(self, text):
         output_to_buffer(self.tape.body.buffer, text)
@@ -80,10 +77,8 @@ class TuiLayout:
         self.focus.tui()
 
     def on_add_translation(self, engine):
-        self.focus.set_prev()
-        self.focus.tui()
+        self.on_focus()
         strokes = TextArea(prompt="Strokes:")
-        output_to_buffer(strokes.buffer, "testing")
         translation = TextArea(prompt="Output: ")
 
         output = TextArea(focusable=False)
@@ -102,7 +97,7 @@ class TuiLayout:
                 ],
                 #padding=D(preferred=1, max=1),
             ),
-            width=40
+            width=40,
             #with_background=True,
         )
         self.float = dialog

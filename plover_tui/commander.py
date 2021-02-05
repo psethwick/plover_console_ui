@@ -53,3 +53,6 @@ class Commander:
         except BaseException as e:
             output = "\n\n{}".format(e)
         output_to_buffer(buff, output)
+    
+    def prompt(self):
+        return "well >>> "
