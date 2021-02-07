@@ -2,7 +2,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import Application
 from prompt_toolkit.layout.containers \
-    import HSplit, VSplit, DynamicContainer, Window
+    import HSplit, VSplit, DynamicContainer
 from prompt_toolkit.widgets import TextArea, Frame, Label
 from prompt_toolkit.document import Document
 from prompt_toolkit.application import get_app
@@ -39,9 +39,56 @@ plover_text = """ _____  _
 """
 
 
+class AddTranslation:
+    def __init__(self, engine, on_output, on_exit):
+        self.engine = engine
+        self.on_exit = on_exit
+        self.on_output = on_output
+
+        # we start in the strokes field
+        self.engine.add_dictionary_filter(dictionary_filter)
+
+        self.strokes_field = TextArea(
+                    prompt="Strokes: ",
+                    height=1,
+                    multiline=False,
+                    wrap_lines=False,
+                )
+        self.translation_field = TextArea(
+                    prompt="Output: ",
+                    height=1,
+                    multiline=False,
+                    wrap_lines=False,
+                ),
+        kb = KeyBindings()
+
+        @kb.add("escape", eager=True)
+        def _(event):
+            # TODO cleanup fields
+            on_exit()
+
+        @kb.add("tab")
+        def _(event):
+            if get_app().layout.has_focus(self.strokes_field):
+                self.engine.remove_dictionary_filter(dictionary_filter)
+            else:
+                self.engine.add_dictionary_filter(dictionary_filter)
+            get_app().layout.focus_next()
+            self.on_exit()
+
+        self.container = HSplit(
+            [
+                self.strokes_field,
+                self.translation_field
+            ],
+            # TODO do I want to modal?
+            key_bindings=self.kb,
+        )
+        get_app().layout.focus(self.strokes_field)
+
+
 class TuiLayout:
     def __init__(self, focus) -> None:
-        self.engine = None
         self.focus = focus
         self.cmder_input = TextArea(
                 height=1,
@@ -51,20 +98,22 @@ class TuiLayout:
         add_translation_kb = KeyBindings()
 
         @add_translation_kb.add("escape", eager=True)
-        def escape(event):
+        def _(event):
             self.input = self.cmder_input
             get_app().layout.focus(self.cmder_input)
+            self.focus.prev()
 
         @add_translation_kb.add("s-tab")
         @add_translation_kb.add("tab")
-        def next(event):
+        def _(event):
             if get_app().layout.has_focus(self.add_translation_input.children[0]):
                 self.engine.remove_dictionary_filter(dictionary_filter)
             else:
                 self.engine.add_dictionary_filter(dictionary_filter)
-
             get_app().layout.focus_next()
 
+        # TODO this needs all the handlers
+        # TODO and probably to live in its own class
         self.add_translation_input = HSplit(
             [
                 TextArea(
@@ -139,11 +188,8 @@ class TuiLayout:
     # TODO solve the probs
     def on_add_translation(self, engine):
         self.focus_tui()
-        self.engine = engine
-        self.input = self.add_translation_input
-        engine.add_dictionary_filter(dictionary_filter)
-        # TODO unjank
-        get_app().layout.focus(self.add_translation_input.children[0])
+        at = AddTranslation(engine, ooutput, exxti)
+        self.input = at.container
 
 
 focus = Focus()
