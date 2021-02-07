@@ -37,8 +37,9 @@ class Commander:
                     output = self._layout.toggle_tape()
                 if words[0] == "suggestions":
                     output = self._layout.toggle_suggestions()
-                if words[0] == "console":
-                    output = self._layout.toggle_console()
+                if words[0] == "reset":
+                    output = "Reseting machine..."
+                    self._engine.reset_machine()
                 if words[0] == "save":
                     output = "Saving config..."
                     with open(self._config.target_file, 'wb') as f:

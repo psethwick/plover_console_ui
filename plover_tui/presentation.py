@@ -2,8 +2,8 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import Application
 from prompt_toolkit.layout.containers \
-    import HSplit, VSplit, DynamicContainer, Window, FloatContainer, Float
-from prompt_toolkit.widgets import TextArea, Frame, Label, Dialog
+    import HSplit, VSplit, DynamicContainer, Window
+from prompt_toolkit.widgets import TextArea, Frame, Label
 from prompt_toolkit.document import Document
 from prompt_toolkit.application import get_app
 from prompt_toolkit.styles import Style
@@ -41,12 +41,50 @@ plover_text = """ _____  _
 
 class TuiLayout:
     def __init__(self, focus) -> None:
+        self.engine = None
         self.focus = focus
-        self.input = TextArea(
+        self.cmder_input = TextArea(
                 height=1,
                 multiline=False,
                 wrap_lines=False,
             )
+        add_translation_kb = KeyBindings()
+
+        @add_translation_kb.add("escape", eager=True)
+        def escape(event):
+            self.input = self.cmder_input
+            get_app().layout.focus(self.cmder_input)
+
+        @add_translation_kb.add("s-tab")
+        @add_translation_kb.add("tab")
+        def next(event):
+            if get_app().layout.has_focus(self.add_translation_input.children[0]):
+                self.engine.remove_dictionary_filter(dictionary_filter)
+            else:
+                self.engine.add_dictionary_filter(dictionary_filter)
+
+            get_app().layout.focus_next()
+
+        self.add_translation_input = HSplit(
+            [
+                TextArea(
+                    prompt="Strokes: ",
+                    height=1,
+                    multiline=False,
+                    wrap_lines=False,
+                ),
+                TextArea(
+                    prompt="Output: ",
+                    height=1,
+                    multiline=False,
+                    wrap_lines=False,
+                ),
+            ],
+            # TODO do I want to modal?
+            key_bindings=add_translation_kb,
+        )
+
+        self.input = self.cmder_input
 
         self.status_bar = Label("Loading status bar...",
                                 style="class:status")
@@ -60,19 +98,13 @@ class TuiLayout:
         self.outputs = [
             self.console
         ]
-        self.float = Window()
-        self.container = FloatContainer(
-            HSplit(
+        self.container = HSplit(
                 [
                     DynamicContainer(lambda: VSplit(self.outputs)),
-                    self.input,
+                    DynamicContainer(lambda: self.input),
                     self.status_bar
                 ]
-            ),
-            floats=[
-                Float(DynamicContainer(lambda: self.float))
-            ]
-        )
+            )
 
     def __call__(self):
         return self.container
@@ -88,9 +120,6 @@ class TuiLayout:
 
     def toggle_tape(self):
         return "Tape: " + self._toggle(self.tape)
-
-    def toggle_console(self):
-        return "Console: " + self._toggle(self.console)
 
     def toggle_suggestions(self):
         return "Suggestions: " + self._toggle(self.suggestions)
@@ -110,28 +139,11 @@ class TuiLayout:
     # TODO solve the probs
     def on_add_translation(self, engine):
         self.focus_tui()
+        self.engine = engine
+        self.input = self.add_translation_input
         engine.add_dictionary_filter(dictionary_filter)
-        strokes = TextArea(prompt="Strokes:")
-        translation = TextArea(prompt="Output: ")
-
-        output = TextArea(focusable=False)
-        dialog = Dialog(
-            title="Add Translation",
-            body=VSplit(
-                [
-                    HSplit(
-                        [
-                            strokes,
-                            translation,
-                        ]
-                    ),
-                    output
-                ],
-            ),
-            width=40,
-        )
-        self.float = dialog
-        get_app().layout.focus(dialog)
+        # TODO unjank
+        get_app().layout.focus(self.add_translation_input.children[0])
 
 
 focus = Focus()
@@ -145,7 +157,8 @@ def _(event):
     event.app.exit(0)
 
 
-@kb.add("escape", eager=True)
+# TODO not too sure about this
+#@kb.add("escape", eager=True)
 def _(event):
     focus.prev()
 
