@@ -35,11 +35,11 @@ class TuiEngine(StenoEngine, Thread):
                           partial(layout.on_add_translation, self))
         cmder = Commander(self, layout)
 
-        layout.input_field.control.input_processors.append(
+        layout.input.control.input_processors.append(
                     BeforeInput(cmder.prompt, style="class:text-area.prompt"),
         )
 
-        layout.input_field.accept_handler = cmder
+        layout.input.accept_handler = cmder
         layout.status_bar.text = partial(status_bar_text, self)
 
     def _in_engine_thread(self):

@@ -30,18 +30,28 @@ def dictionary_filter(key, value):
     return not special
 
 
+plover_text = """ _____  _
+|  __ \| |
+| |__) | | _____   _____ _ __
+|  ___/| |/ _ \ \ / / _ \ '__|
+| |    | | (_) \ V /  __/ |
+|_|    |_|\___/ \_/ \___|_|
+"""
+
+
 class TuiLayout:
     def __init__(self, focus) -> None:
         self.focus = focus
-        self.input_field = TextArea(
+        self.input = TextArea(
                 height=1,
                 multiline=False,
                 wrap_lines=False,
             )
 
-        self.status_bar = Label("Loading status bar...", style="class:status")
+        self.status_bar = Label("Loading status bar...",
+                                style="class:status")
 
-        self.console = Frame(TextArea(focusable=False),
+        self.console = Frame(TextArea(plover_text, focusable=False),
                              title="Console")
         self.tape = Frame(TextArea(focusable=False),
                           title="Paper Tape")
@@ -55,7 +65,7 @@ class TuiLayout:
             HSplit(
                 [
                     DynamicContainer(lambda: VSplit(self.outputs)),
-                    self.input_field,
+                    self.input,
                     self.status_bar
                 ]
             ),
@@ -151,7 +161,7 @@ layout = TuiLayout(focus)
 
 application = Application(
     layout=Layout(DynamicContainer(layout),
-                  focused_element=layout.input_field),
+                  focused_element=layout.input),
     key_bindings=kb,
     style=style,
     mouse_support=False,
