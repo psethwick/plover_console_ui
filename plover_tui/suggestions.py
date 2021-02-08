@@ -21,7 +21,6 @@ def on_translated(engine, on_output, old, new):
         return
 
     last_translations = engine.translator_state.translations
-    log.info(last_translations[-1:][0].strokes)
     retro_formatter = RetroFormatter(last_translations)
     split_words = retro_formatter.last_words(10, rx=WORD_RX)
 
