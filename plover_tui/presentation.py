@@ -1,8 +1,7 @@
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import Application
-from prompt_toolkit.layout.containers \
-    import HSplit, VSplit, DynamicContainer
+from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer
 from prompt_toolkit.widgets import TextArea, Frame, Label
 from prompt_toolkit.document import Document
 from prompt_toolkit.application import get_app
@@ -13,20 +12,18 @@ from .focus import Focus
 
 def output_to_buffer(buffer, text):
     o = f"{buffer.text[:1000]}\n{text}"
-    buffer.document = Document(
-        text=o, cursor_position=len(o)
-    )
+    buffer.document = Document(text=o, cursor_position=len(o))
     get_app().invalidate()
 
 
 def dictionary_filter(key, value):
     # Allow undo...
-    if value == '=undo':
+    if value == "=undo":
         return False
     # ...and translations with special entries. Do this by looking for
     # braces but take into account escaped braces and slashes.
-    escaped = value.replace('\\\\', '').replace('\\{', '')
-    special = '{#'  in escaped or '{PLOVER:' in escaped
+    escaped = value.replace("\\\\", "").replace("\\{", "")
+    special = "{#" in escaped or "{PLOVER:" in escaped
     return not special
 
 
@@ -49,17 +46,19 @@ class AddTranslation:
         self.engine.add_dictionary_filter(dictionary_filter)
 
         self.strokes_field = TextArea(
-                    prompt="Strokes: ",
-                    height=1,
-                    multiline=False,
-                    wrap_lines=False,
-                )
-        self.translation_field = TextArea(
-                    prompt="Output: ",
-                    height=1,
-                    multiline=False,
-                    wrap_lines=False,
-                ),
+            prompt="Strokes: ",
+            height=1,
+            multiline=False,
+            wrap_lines=False,
+        )
+        self.translation_field = (
+            TextArea(
+                prompt="Output: ",
+                height=1,
+                multiline=False,
+                wrap_lines=False,
+            ),
+        )
         kb = KeyBindings()
 
         @kb.add("escape", eager=True)
@@ -77,10 +76,7 @@ class AddTranslation:
             self.on_exit()
 
         self.container = HSplit(
-            [
-                self.strokes_field,
-                self.translation_field
-            ],
+            [self.strokes_field, self.translation_field],
             # TODO do I want to modal?
             key_bindings=self.kb,
         )
@@ -91,10 +87,10 @@ class TuiLayout:
     def __init__(self, focus) -> None:
         self.focus = focus
         self.cmder_input = TextArea(
-                height=1,
-                multiline=False,
-                wrap_lines=False,
-            )
+            height=1,
+            multiline=False,
+            wrap_lines=False,
+        )
         add_translation_kb = KeyBindings()
 
         @add_translation_kb.add("escape", eager=True)
@@ -135,25 +131,19 @@ class TuiLayout:
 
         self.input = self.cmder_input
 
-        self.status_bar = Label("Loading status bar...",
-                                style="class:status")
+        self.status_bar = Label("Loading status bar...", style="class:status")
 
-        self.console = Frame(TextArea(plover_text, focusable=False),
-                             title="Console")
-        self.tape = Frame(TextArea(focusable=False),
-                          title="Paper Tape")
-        self.suggestions = Frame(TextArea(focusable=False),
-                                 title="Suggestions")
-        self.outputs = [
-            self.console
-        ]
+        self.console = Frame(TextArea(plover_text, focusable=False), title="Console")
+        self.tape = Frame(TextArea(focusable=False), title="Paper Tape")
+        self.suggestions = Frame(TextArea(focusable=False), title="Suggestions")
+        self.outputs = [self.console]
         self.container = HSplit(
-                [
-                    DynamicContainer(lambda: VSplit(self.outputs)),
-                    DynamicContainer(lambda: self.input),
-                    self.status_bar
-                ]
-            )
+            [
+                DynamicContainer(lambda: VSplit(self.outputs)),
+                DynamicContainer(lambda: self.input),
+                self.status_bar,
+            ]
+        )
 
     def __call__(self):
         return self.container
@@ -204,7 +194,7 @@ def _(event):
 
 
 # TODO not too sure about this
-#@kb.add("escape", eager=True)
+# @kb.add("escape", eager=True)
 def _(event):
     focus.prev()
 
@@ -219,11 +209,10 @@ style = Style.from_dict(
 layout = TuiLayout(focus)
 
 application = Application(
-    layout=Layout(DynamicContainer(layout),
-                  focused_element=layout.input),
+    layout=Layout(DynamicContainer(layout), focused_element=layout.input),
     key_bindings=kb,
     style=style,
     mouse_support=False,
     full_screen=True,
-    enable_page_navigation_bindings=False
+    enable_page_navigation_bindings=False,
 )

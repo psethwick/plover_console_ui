@@ -11,32 +11,35 @@ from .commander import Commander
 
 
 def status_bar_text(engine) -> str:
-    return \
-        " | Plover" + \
-        " | Machine: " + engine.config["machine_type"] + \
-        " | Output: " + str(engine.output) + \
-        " | System: " + engine.config["system_name"] + \
-        " |"
+    return (
+        " | Plover"
+        " | Machine: "
+        + engine.config["machine_type"]
+        + " | Output: "
+        + str(engine.output)
+        + " | System: "
+        + engine.config["system_name"]
+        + " |"
+    )
 
 
 class TuiEngine(StenoEngine, Thread):
-
     def __init__(self, config, keyboard_emulation, layout: TuiLayout):
         StenoEngine.__init__(self, config, keyboard_emulation)
         Thread.__init__(self)
-        self.name += '-engine'
+        self.name += "-engine"
         self.layout = layout
         # TODO format tape
-        self.hook_connect('stroked',
-                          lambda stroke: layout.output_to_tape(stroke.rtfcre))
-        self.hook_connect('focus', layout.focus_tui)
-        self.hook_connect('translated', self.on_translated)
-        self.hook_connect('add_translation',
-                          partial(layout.on_add_translation, self))
+        self.hook_connect(
+            "stroked", lambda stroke: layout.output_to_tape(stroke.rtfcre)
+        )
+        self.hook_connect("focus", layout.focus_tui)
+        self.hook_connect("translated", self.on_translated)
+        self.hook_connect("add_translation", partial(layout.on_add_translation, self))
         cmder = Commander(self, layout)
 
         layout.cmder_input.control.input_processors.append(
-                    BeforeInput(cmder.prompt, style="class:text-area.prompt"),
+            BeforeInput(cmder.prompt, style="class:text-area.prompt"),
         )
 
         layout.cmder_input.accept_handler = cmder
@@ -54,6 +57,4 @@ class TuiEngine(StenoEngine, Thread):
         return self.code
 
     def on_translated(self, old, new):
-        on_translated(self,
-                      self.layout.output_to_suggestions,
-                      old, new)
+        on_translated(self, self.layout.output_to_suggestions, old, new)

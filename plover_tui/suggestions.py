@@ -4,7 +4,7 @@ from plover.formatting import RetroFormatter
 from plover.suggestions import Suggestion
 from plover import log
 
-WORD_RX = re.compile(r'(?:\w+|[^\w\s]+)\s*')
+WORD_RX = re.compile(r"(?:\w+|[^\w\s]+)\s*")
 
 
 def tails(ls):
@@ -27,7 +27,7 @@ def on_translated(engine, on_output, old, new):
 
     suggestion_list = []
     for phrase in tails(split_words):
-        phrase = ''.join(phrase)
+        phrase = "".join(phrase)
         suggestion_list.extend(engine.get_suggestions(phrase))
 
     if suggestion_list:

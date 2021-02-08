@@ -3,6 +3,7 @@ from threading import Event
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover import log
 from plover.config import Config
+
 # this will never come back to bite me
 from plover.log import __logger
 
@@ -14,6 +15,7 @@ from .presentation import layout, application
 # minimum
 # TODO dictionary update
 # TODO tui options?
+
 
 def show_error(title, message):
     # this only gets called if gui.main fails
@@ -39,7 +41,7 @@ def main(config: Config):
         return 3
 
     quitting = Event()
-    engine.hook_connect('quit', quitting.set)
+    engine.hook_connect("quit", quitting.set)
     engine.start()
 
     code = application.run()

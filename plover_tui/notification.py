@@ -1,6 +1,7 @@
 from plover import log
 from plover.log import logging
 
+
 class TuiNotificationHandler(logging.Handler):
     """ Handler using tui output_field to show messages. """
 
@@ -8,11 +9,13 @@ class TuiNotificationHandler(logging.Handler):
         super().__init__()
         self._on_output = on_output
         # do we care about the level?
-        #self.setLevel(log.WARNING)
-        self.setFormatter(log.NoExceptionTracebackFormatter('%(levelname)s: %(message)s'))
+        # self.setLevel(log.WARNING)
+        self.setFormatter(
+            log.NoExceptionTracebackFormatter("%(levelname)s: %(message)s")
+        )
 
     def emit(self, record):
         message = self.format(record)
-        if message.endswith('\n'):
+        if message.endswith("\n"):
             message = message[:-1]
         self._on_output(message)
