@@ -1,3 +1,5 @@
+from functools import partial
+
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import Application
@@ -12,7 +14,11 @@ from .addtranslation import AddTranslation
 
 
 def output_to_buffer(buffer, text):
-    o = f"{buffer.text[:1000]}\n{text}"
+    output_to_buffer_position(buffer, 1000, text)
+
+
+def output_to_buffer_position(buffer, position, text):
+    o = f"{buffer.text[:position]}\n{text}"
     buffer.document = Document(text=o, cursor_position=len(o))
     get_app().invalidate()
 
@@ -87,7 +93,15 @@ class TuiLayout:
 
     def on_add_translation(self, engine):
         self.focus_tui()
-        at = AddTranslation(engine, self.output_to_console, self.exit_modal)
+        at = AddTranslation(
+            engine,
+            partial(
+                output_to_buffer_position,
+                self.console.body.buffer,
+                len(self.console.body.buffer.text),
+            ),
+            self.exit_modal,
+        )
         self.input = at.container
         get_app().layout.focus(at.strokes_field)
 
@@ -106,7 +120,6 @@ def _(event):
 style = Style.from_dict(
     {
         "status": "reverse",
-        "shadow": "bg:#440044",
     }
 )
 
