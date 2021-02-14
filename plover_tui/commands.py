@@ -17,9 +17,9 @@ class Command(metaclass=ABCMeta):
         return "Unknown"
 
 
-class QuitCommand(Command):
+class ExitCommand(Command):
     def __init__(self):
-        self.handles = "quit"
+        self.handles = "exit"
 
     def stateful(self):
         return False
@@ -75,7 +75,7 @@ class ResetMachineCommand(Command):
         self.resetter = resetter
 
     def handle(self, on_output, words=None):
-        on_output("Reseting machine...")
+        on_output("Resetting machine...")
         self.resetter()
 
 class SaveConfigCommand(Command):
