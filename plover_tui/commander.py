@@ -41,6 +41,8 @@ class Handler():
                 else:
                     return None
 
+        on_output(f"Unknown command: {' '.join(words)}")
+
 
 class Commander:
     def __init__(self, engine, layout) -> None:
