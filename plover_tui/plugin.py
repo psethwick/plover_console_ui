@@ -12,9 +12,10 @@ from .notification import TuiNotificationHandler
 from .presentation import layout, application
 
 
-# minimum
-# TODO dictionary update
 # TODO tui options?
+# TODO layout switch hor/ver
+# TODO amber/green (theme)
+# TODO multi-level prompt state?
 
 
 def show_error(title, message):
