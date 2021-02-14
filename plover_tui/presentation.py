@@ -14,7 +14,9 @@ from .addtranslation import AddTranslation
 
 
 def output_to_buffer(buffer, text):
-    output_to_buffer_position(buffer, 1000, text)
+    o = f"{buffer.text}\n{text}"
+    buffer.document = Document(text=o, cursor_position=len(o))
+    get_app().invalidate()
 
 
 def output_to_buffer_position(buffer, position, text):
