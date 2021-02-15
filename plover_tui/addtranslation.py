@@ -20,6 +20,7 @@ def dictionary_filter(key, value):
     special = "{#" in escaped or "{PLOVER:" in escaped
     return not special
 
+
 def format_label(fmt, strokes, translation):
     if strokes:
         strokes = ", ".join("/".join(s) for s in sort_steno_strokes(strokes))
@@ -47,6 +48,7 @@ class AddTranslation:
             multiline=False,
             wrap_lines=False,
             accept_handler=self.accept,
+            style="class:normal",
         )
 
         self.strokes_field.buffer.on_text_changed += self.strokes_changed
@@ -56,6 +58,7 @@ class AddTranslation:
             multiline=False,
             wrap_lines=False,
             accept_handler=self.accept,
+            style="class:normal",
         )
 
         self.translation_field.buffer.on_text_changed += self.translation_changed

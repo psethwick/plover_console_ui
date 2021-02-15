@@ -38,17 +38,23 @@ class TuiLayout:
     def __init__(self, focus) -> None:
         self.focus = focus
         self.cmder_input = TextArea(
-            height=1,
-            multiline=False,
-            wrap_lines=False,
+            height=1, multiline=False, wrap_lines=False, style="class:normal"
         )
         self.input = self.cmder_input
 
         self.status_bar = Label("Loading status bar...", style="class:status")
 
-        self.console = Frame(TextArea(plover_text, focusable=False), title="Console")
-        self.tape = Frame(TextArea(focusable=False), title="Paper Tape")
-        self.suggestions = Frame(TextArea(focusable=False), title="Suggestions")
+        self.console = Frame(
+            TextArea(plover_text, focusable=False),
+            title="Console",
+            style="class:normal",
+        )
+        self.tape = Frame(
+            TextArea(focusable=False), title="Paper Tape", style="class:normal"
+        )
+        self.suggestions = Frame(
+            TextArea(focusable=False), title="Suggestions", style="class:normal"
+        )
         self.outputs = [self.console]
         self.container = HSplit(
             [
@@ -122,6 +128,7 @@ def _(event):
 style = Style.from_dict(
     {
         "status": "reverse",
+        "normal": "fg:yellow",
     }
 )
 

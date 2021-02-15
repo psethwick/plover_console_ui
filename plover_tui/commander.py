@@ -1,8 +1,16 @@
 from prompt_toolkit.buffer import Buffer
 
-from .commands import LookupCommand, ExitCommand, ToggleTapeCommand, \
-    ToggleSuggestionsCommand, ResetMachineCommand, SaveConfigCommand, \
-    ToggleOutputCommand, SetMachineCommand
+from .commands import (
+    LookupCommand,
+    ExitCommand,
+    ToggleTapeCommand,
+    ToggleSuggestionsCommand,
+    ResetMachineCommand,
+    SaveConfigCommand,
+    ToggleOutputCommand,
+    SetMachineCommand,
+    ConfigCommand,
+)
 
 
 class Commander:
@@ -15,7 +23,8 @@ class Commander:
             ResetMachineCommand(engine.reset_machine),
             SaveConfigCommand(engine),
             ToggleOutputCommand(engine),
-            SetMachineCommand(engine)
+            ConfigCommand(engine.config),
+            SetMachineCommand(engine),
         ]
         self.output = layout.output_to_console
         self.state = None
