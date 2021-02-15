@@ -124,7 +124,8 @@ def _(event):
     " Pressing Ctrl-Q or Ctrl-C will exit the user interface. "
     event.app.exit(0)
 
-def style_colored(color)-> Style:
+
+def style_colored(color) -> Style:
     return Style.from_dict(
         {
             "status": f"fg:{color} reverse",
@@ -132,7 +133,8 @@ def style_colored(color)-> Style:
         }
     )
 
-style = style_colored("yellow")
+
+style = style_colored("goldenrod")
 
 layout = TuiLayout(focus)
 
