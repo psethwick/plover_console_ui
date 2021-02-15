@@ -1,6 +1,7 @@
 from prompt_toolkit.buffer import Buffer
 
 from .commands import (
+    ColorCommand,
     LookupCommand,
     ExitCommand,
     ToggleTapeCommand,
@@ -25,6 +26,7 @@ class Commander:
             ToggleOutputCommand(engine),
             ConfigCommand(engine.config),
             SetMachineCommand(engine),
+            ColorCommand(),
         ]
         self.output = layout.output_to_console
         self.state = None

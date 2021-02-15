@@ -5,6 +5,7 @@ from prompt_toolkit.application import get_app
 from plover.translation import unescape_translation
 
 from .suggestions import format_suggestions
+from .presentation import style_colored
 
 # TODO each command describes itself
 # TODO special 'help' command that exists at every level (describes available)
@@ -18,6 +19,16 @@ class Command(metaclass=ABCMeta):
     def handle(self, output, words=None):
         return "Unknown"
 
+class ColorCommand(Command):
+    def __init__(self) -> None:
+        self.handles = "color"
+    
+    def stateful(self):
+        return True
+
+    def handle(self, output, words=None):
+        if words:
+            get_app().style = style_colored(words[0])
 
 class ConfigCommand(Command):
     def __init__(self, config) -> None:
