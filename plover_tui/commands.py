@@ -15,20 +15,28 @@ class Command(metaclass=ABCMeta):
     def stateful(self):
         return False
 
+    def on_enter(self):
+        pass
+
+    def on_exit(self):
+        pass
+
     @abstractmethod
     def handle(self, output, words=None):
         return "Unknown"
 
+
 class ColorCommand(Command):
     def __init__(self) -> None:
         self.handles = "color"
-    
+
     def stateful(self):
         return True
 
     def handle(self, output, words=None):
         if words:
             get_app().style = style_colored(words[0])
+
 
 class ConfigCommand(Command):
     def __init__(self, config) -> None:
@@ -39,11 +47,13 @@ class ConfigCommand(Command):
         return True
 
     def handle(self, output, words):
-        if words:
-            for k in self.config:
-                if k.startswith(words[0]):
-                    output(k)
-                    output(self.config[k])
+        for o in self.config._config:
+            output(o)
+        self.config._config.add_section("Console UI")
+        self.config._config.set("Console UI", "fg", "green")
+        section = " ".join(words)
+        if section in self.config._config:
+            output(self.config._config.options(section))
         # for w in words:
         #     if w in self.config:
         #         output(self.config[w])

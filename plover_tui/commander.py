@@ -24,7 +24,7 @@ class Commander:
             ResetMachineCommand(engine.reset_machine),
             SaveConfigCommand(engine),
             ToggleOutputCommand(engine),
-            ConfigCommand(engine.config),
+            ConfigCommand(engine._config),
             SetMachineCommand(engine),
             ColorCommand(),
         ]
