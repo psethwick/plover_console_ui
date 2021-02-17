@@ -40,8 +40,8 @@ class ConfigCommand(Command):
         self.config = config
         super().__init__("configure", sub_commands)
 
-    def handle(self, output, words):
-        pass
+    #def handle(self, output, words):
+    #    pass
         # for o in self.config._config:
         #     output(o)
         # self.config._config.add_section("Console UI")

@@ -36,6 +36,7 @@ class Commander:
 
         end_of_line = False
 
+        local_state = []
         while possible_command and not end_of_line:
             self.output("handler: " + str(handler.name))
             if not handler.sub_commands:
@@ -44,48 +45,17 @@ class Commander:
                 break
             for c in handler.sub_commands:
                 if c.name.startswith(possible_command):
+                    local_state.append(c.name)
                     handler = c
                     self.output("setting handler: " + c.name)
                     _ = cmdline.pop(0)
                     possible_command = peek(cmdline)
                     break
 
-        handler.handle(cmdline)
+        if not cmdline and handler.sub_commands:
+            self.state = local_state
 
-        # if self.state:
-        #     cmdline = self.state[:]
-        #     args = words
-        #     # find class which handles, call it
-        #     # then return
-        #     while cmdline:
-        #         c = cmdline.pop(0)
-        #         self.output(c)
-        #         for s in handler.sub_commands:
-        #             if s.name.startswith(c):
-        #                 self.output("found " + s.name)
-        #                 handler = s
-        #                 break
-
-        #     handler.handle(self.output, args)
-        #     return
-
-        # else:
-        #     # grab commands off the word list
-        #     found_level = False
-        #     while not found_level:
-        #         if handler.sub_commands:
-        #             cmdline = words.pop(0)
-        #             for s in handler.sub_commands:
-        #                 if s.name.startswith(cmdline):
-        #                     handler = s
-        #                     break
-        #         else:
-        #             found_level = True
-
-        #     handler.handle(self.output, words)
-        #     return
-
-        self.output(f"Unknown command: {' '.join(words)}")
+        handler.handle(self.output, cmdline)
 
     def prompt(self):
         return " ".join(self.state) + "> "
