@@ -14,10 +14,10 @@ from .commands import (
 
 
 class Commander:
-    def __init__(self, commands, output) -> None:
-        self.commands = commands
+    def __init__(self, command_container, output) -> None:
+        self.command_container = command_container
         self.output = output
-        self.state = None
+        self.state = ["configure"]
 
     def __call__(self, buff: Buffer):
         try:
@@ -31,30 +31,43 @@ class Commander:
     def handle_command(self, words):
         if not words:
             if self.state:
-                self.output(f"Exit {self.state}")
-            self.state = None
+                exiting = self.state.pop()
+                self.output(f"Exit {exiting}")
             return
+        handler = self.command_container
 
         if self.state:
             command = self.state
             args = words
+            # find class which handles, call it
+            # then return
+            while command:
+                c = command.pop()
+                for s in handler.sub_commands:
+                    if s.name.startswith(c):
+                        handler = s
+                        break
+
+            handler.handle(self.output, args)
+            return
+
         else:
-            command = words[0]
-            args = words[1:]
-        for h in self.commands:
-            if h.handles.startswith(command):
-                if not args:
-                    if h.stateful():
-                        self.state = h.handles
-                        self.output(f"Enter {self.state}")
-                        return
-                h.handle(self.output, args)
-                return
+            # grab commands off the word list
+            found_level = False
+            while not found_level:
+                if handler.sub_commands:
+                    command = words.pop(0)
+                    for s in handler.sub_commands:
+                        if s.name.startswith(command):
+                            self.state.append(s.name)
+                            handler = s
+                            break
+                else:
+                    found_level = True
+
+            handler.handle(self.output, words)
 
         self.output(f"Unknown command: {' '.join(words)}")
 
     def prompt(self):
-        prompt = ""
-        if self.state:
-            prompt += self.state
-        return prompt + "> "
+        return " ".join(self.state) + "> "

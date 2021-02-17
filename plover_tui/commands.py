@@ -12,8 +12,9 @@ from .presentation import style_colored
 
 
 class Command(metaclass=ABCMeta):
-    def stateful(self):
-        return False
+    def __init__(self, name, sub_commands=[]) -> None:
+        self.name = name
+        self.sub_commands = sub_commands
 
     def on_enter(self):
         pass
@@ -21,17 +22,13 @@ class Command(metaclass=ABCMeta):
     def on_exit(self):
         pass
 
-    @abstractmethod
     def handle(self, output, words=None):
-        return "Unknown"
+        output("Not supported: " + " ".join(words))
 
 
 class ColorCommand(Command):
     def __init__(self) -> None:
-        self.handles = "color"
-
-    def stateful(self):
-        return True
+        super().__init__("color")
 
     def handle(self, output, words=None):
         if words:
@@ -39,11 +36,11 @@ class ColorCommand(Command):
 
 
 class ConfigCommand(Command):
-    def __init__(self, config) -> None:
-        self.handles = "config"
+    def __init__(self, config, sub_commands) -> None:
         self.config = config
+        super().__init__("configure", sub_commands)
 
-    def stateful(self):
+    def container(self):
         return True
 
     def handle(self, output, words):
@@ -58,7 +55,7 @@ class ConfigCommand(Command):
 
 class ExitCommand(Command):
     def __init__(self):
-        self.handles = "exit"
+        super().__init__("exit")
 
     def handle(self, output, words=None):
         get_app().exit(0)
@@ -70,10 +67,10 @@ class LookupCommand(Command):
     """
 
     def __init__(self, engine):
-        self.handles = "lookup"
         self.engine = engine
+        super().__init__("lookup")
 
-    def stateful(self):
+    def container(self):
         return True
 
     def handle(self, output, words):
@@ -89,9 +86,9 @@ class LookupCommand(Command):
 
 class ToggleTapeCommand(Command):
     def __init__(self, toggler, engine):
-        self.handles = "tape"
         self.toggler = toggler
         self.engine = engine
+        super().__init__("tape")
 
     def handle(self, output, words=None):
         show = self.toggler()
@@ -101,9 +98,9 @@ class ToggleTapeCommand(Command):
 
 class ToggleSuggestionsCommand(Command):
     def __init__(self, toggler, engine):
-        self.handles = "suggestions"
         self.toggler = toggler
         self.engine = engine
+        super().__init__("suggestions")
 
     def handle(self, output, words=None):
         show = self.toggler()
@@ -113,8 +110,8 @@ class ToggleSuggestionsCommand(Command):
 
 class ResetMachineCommand(Command):
     def __init__(self, resetter):
-        self.handles = "reset"
         self.resetter = resetter
+        super().__init__("reset")
 
     def handle(self, output, words=None):
         output("Resetting machine...")
@@ -123,8 +120,8 @@ class ResetMachineCommand(Command):
 
 class ToggleOutputCommand(Command):
     def __init__(self, engine):
-        self.handles = "output"
         self.engine = engine
+        super().__init__("output")
 
     def handle(self, output, words=None):
         if self.engine.output:
@@ -138,8 +135,8 @@ class ToggleOutputCommand(Command):
 # TODO needs to be able to set the various machine parameter thingies
 class SetMachineCommand(Command):
     def __init__(self, engine):
-        self.handles = "machine"
         self.engine = engine
+        super().__init__("machine")
 
     def handle(self, output, words=None):
         new_machine = " ".join(words)
@@ -147,15 +144,24 @@ class SetMachineCommand(Command):
         self.engine.config = {"machine_type": new_machine}
 
 
+class TopCommand(Command):
+    def __init__(self, sub_commands) -> None:
+        super().__init__(None, sub_commands=sub_commands)
+
+
 def build_commands(engine, layout):
-    return [
-        LookupCommand(engine),
-        ExitCommand(),
-        ToggleTapeCommand(layout.toggle_tape, engine),
-        ToggleSuggestionsCommand(layout.toggle_suggestions, engine),
-        ResetMachineCommand(engine.reset_machine),
-        ToggleOutputCommand(engine),
-        ConfigCommand(engine._config),
-        SetMachineCommand(engine),
-        ColorCommand(),
-    ]
+    return TopCommand(
+        [
+            # dictionary?
+            LookupCommand(engine),
+            ExitCommand(),
+            ResetMachineCommand(engine.reset_machine),
+            ToggleOutputCommand(engine),
+            # this could do more stuff
+            ConfigCommand(engine._config, [ColorCommand()]),
+            SetMachineCommand(engine),
+            # UI? (maybe color in here)
+            ToggleTapeCommand(layout.toggle_tape, engine),
+            ToggleSuggestionsCommand(layout.toggle_suggestions, engine),
+        ]
+    )
