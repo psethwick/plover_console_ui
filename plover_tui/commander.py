@@ -36,21 +36,32 @@ class Commander:
 
         end_of_line = False
 
+        maximum_depth = 10
+
         local_state = []
         while possible_command and not end_of_line:
+            maximum_depth -= 1
+            if maximum_depth == 0:
+                self.output("infinite loop!?")
+                self.output(possible_command)
+                break
             self.output("handler: " + str(handler.name))
             if not handler.sub_commands:
                 self.output("END")
                 end_of_line = True
                 break
+            found_command = False
             for c in handler.sub_commands:
                 if c.name.startswith(possible_command):
+                    found_command = True
                     local_state.append(c.name)
                     handler = c
                     self.output("setting handler: " + c.name)
                     _ = cmdline.pop(0)
                     possible_command = peek(cmdline)
                     break
+            if not found_command:
+                break
 
         if not cmdline and handler.sub_commands:
             self.state = local_state
