@@ -56,6 +56,7 @@ class TuiLayout:
             TextArea(focusable=False), title="Suggestions", style="class:normal"
         )
         self.outputs = [self.console]
+
         self.container = HSplit(
             [
                 DynamicContainer(lambda: VSplit(self.outputs)),
@@ -77,18 +78,18 @@ class TuiLayout:
         output_to_buffer(self.suggestions.body.buffer, text)
 
     def toggle_tape(self):
-        return "Tape: " + self._toggle(self.tape)
+        return self._toggle(self.tape)
 
     def toggle_suggestions(self):
-        return "Suggestions: " + self._toggle(self.suggestions)
+        return self._toggle(self.suggestions)
 
     def _toggle(self, item):
         if item in self.outputs:
             self.outputs.remove(item)
-            return "off"
+            return False
         else:
             self.outputs.append(item)
-            return "on"
+            return True
 
     def focus_tui(self):
         self.focus.set_prev()

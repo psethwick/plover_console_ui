@@ -54,9 +54,6 @@ class ConfigCommand(Command):
         section = " ".join(words)
         if section in self.config._config:
             output(self.config._config.options(section))
-        # for w in words:
-        #     if w in self.config:
-        #         output(self.config[w])
 
 
 class ExitCommand(Command):
@@ -91,21 +88,27 @@ class LookupCommand(Command):
 
 
 class ToggleTapeCommand(Command):
-    def __init__(self, toggler):
+    def __init__(self, toggler, engine):
         self.handles = "tape"
         self.toggler = toggler
+        self.engine = engine
 
     def handle(self, output, words=None):
-        output(self.toggler())
+        show = self.toggler()
+        self.engine.config = {"show_stroke_display": show}
+        output(f"Show tape: {show}")
 
 
 class ToggleSuggestionsCommand(Command):
-    def __init__(self, toggler):
+    def __init__(self, toggler, engine):
         self.handles = "suggestions"
         self.toggler = toggler
+        self.engine = engine
 
     def handle(self, output, words=None):
-        output(self.toggler())
+        show = self.toggler()
+        self.engine.config = {"show_suggestions_display": show}
+        output(f"Show suggestions: {show}")
 
 
 class ResetMachineCommand(Command):
@@ -116,18 +119,6 @@ class ResetMachineCommand(Command):
     def handle(self, output, words=None):
         output("Resetting machine...")
         self.resetter()
-
-
-# TODO belongs under 'config'
-class SaveConfigCommand(Command):
-    def __init__(self, engine):
-        self.handles = "save"
-        self.engine = engine
-
-    def handle(self, output, words=None):
-        output("Saving config...")
-        with open(self.engine._config.target_file, "wb") as f:
-            self._config.save(f)
 
 
 class ToggleOutputCommand(Command):

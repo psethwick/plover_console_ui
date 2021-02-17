@@ -1,3 +1,4 @@
+from functools import partial
 from threading import Event
 
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
@@ -25,12 +26,19 @@ def show_error(title, message):
     print(f"{title}: {message}")
 
 
+def config_saver(config: Config, output, update):
+    output(f"Saving config: {update}")
+    with open(config.target_file, "wb") as f:
+        config.save(f)
+
+
 def main(config: Config):
     # this screws things up
     # hax tho
     log.remove_handler(__logger._print_handler)
 
     # mor hax ... I don't wanna see QT notifications
+    # TODO this does not seem to actually remove it
     __logger._platform_handler = None
 
     # lets set up something better
@@ -40,6 +48,16 @@ def main(config: Config):
 
     if not engine.load_config():
         return 3
+
+    engine.hook_connect(
+        "config_changed", partial(config_saver, config, layout.output_to_console)
+    )
+
+    if engine.config["show_stroke_display"]:
+        layout.toggle_tape()
+
+    if engine.config["show_suggestions_display"]:
+        layout.toggle_suggestions()
 
     quitting = Event()
     engine.hook_connect("quit", quitting.set)
