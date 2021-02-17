@@ -159,7 +159,8 @@ class ContainerCommand(Command):
 
 def build_commands(engine, layout):
     return ContainerCommand(
-        [
+        name=None,
+        sub_commands=[
             # dictionary?
             LookupCommand(engine),
             ExitCommand(),
