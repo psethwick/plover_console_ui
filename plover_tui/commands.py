@@ -145,3 +145,17 @@ class SetMachineCommand(Command):
         new_machine = " ".join(words)
         output(f"Setting machine to {new_machine}")
         self.engine.config = {"machine_type": new_machine}
+
+
+def build_commands(engine, layout):
+    return [
+        LookupCommand(engine),
+        ExitCommand(),
+        ToggleTapeCommand(layout.toggle_tape, engine),
+        ToggleSuggestionsCommand(layout.toggle_suggestions, engine),
+        ResetMachineCommand(engine.reset_machine),
+        ToggleOutputCommand(engine),
+        ConfigCommand(engine._config),
+        SetMachineCommand(engine),
+        ColorCommand(),
+    ]

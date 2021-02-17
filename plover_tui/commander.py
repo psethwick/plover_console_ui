@@ -14,19 +14,9 @@ from .commands import (
 
 
 class Commander:
-    def __init__(self, engine, layout) -> None:
-        self.commands = [
-            LookupCommand(engine),
-            ExitCommand(),
-            ToggleTapeCommand(layout.toggle_tape, engine),
-            ToggleSuggestionsCommand(layout.toggle_suggestions, engine),
-            ResetMachineCommand(engine.reset_machine),
-            ToggleOutputCommand(engine),
-            ConfigCommand(engine._config),
-            SetMachineCommand(engine),
-            ColorCommand(),
-        ]
-        self.output = layout.output_to_console
+    def __init__(self, commands, output) -> None:
+        self.commands = commands
+        self.output = output
         self.state = None
 
     def __call__(self, buff: Buffer):

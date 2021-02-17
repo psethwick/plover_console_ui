@@ -8,6 +8,7 @@ from plover.engine import StenoEngine
 from prompt_toolkit.layout.processors import BeforeInput
 
 from .commander import Commander
+from .commands import build_commands
 
 
 def status_bar_text(engine) -> str:
@@ -36,7 +37,7 @@ class TuiEngine(StenoEngine, Thread):
         self.hook_connect("focus", layout.focus_tui)
         self.hook_connect("translated", self.on_translated)
         self.hook_connect("add_translation", partial(layout.on_add_translation, self))
-        cmder = Commander(self, layout)
+        cmder = Commander(build_commands(self, layout), layout.output_to_console)
 
         layout.cmder_input.control.input_processors.append(
             BeforeInput(cmder.prompt, style="class:text-area.prompt"),
