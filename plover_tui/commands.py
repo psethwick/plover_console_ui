@@ -40,17 +40,15 @@ class ConfigCommand(Command):
         self.config = config
         super().__init__("configure", sub_commands)
 
-    def container(self):
-        return True
-
     def handle(self, output, words):
-        for o in self.config._config:
-            output(o)
-        self.config._config.add_section("Console UI")
-        self.config._config.set("Console UI", "fg", "green")
-        section = " ".join(words)
-        if section in self.config._config:
-            output(self.config._config.options(section))
+        pass
+        # for o in self.config._config:
+        #     output(o)
+        # self.config._config.add_section("Console UI")
+        # self.config._config.set("Console UI", "fg", "green")
+        # section = " ".join(words)
+        # if section in self.config._config:
+        #     output(self.config._config.options(section))
 
 
 class ExitCommand(Command):
