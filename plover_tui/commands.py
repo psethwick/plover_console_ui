@@ -16,14 +16,15 @@ class Command(metaclass=ABCMeta):
         self.name = name
         self.sub_commands = sub_commands
 
-    def on_enter(self):
+    def on_enter(output, self):
         pass
 
-    def on_exit(self):
+    def on_exit(output, self):
         pass
 
     def handle(self, output, words=None):
         output("Not supported: " + " ".join(words))
+        return False
 
 
 class ColorCommand(Command):
@@ -33,6 +34,8 @@ class ColorCommand(Command):
     def handle(self, output, words=None):
         if words:
             get_app().style = style_colored(words[0])
+            return True
+        return False
 
 
 class ConfigCommand(Command):
@@ -40,15 +43,15 @@ class ConfigCommand(Command):
         self.config = config
         super().__init__("configure", sub_commands)
 
-    #def handle(self, output, words):
+    # def handle(self, output, words):
     #    pass
-        # for o in self.config._config:
-        #     output(o)
-        # self.config._config.add_section("Console UI")
-        # self.config._config.set("Console UI", "fg", "green")
-        # section = " ".join(words)
-        # if section in self.config._config:
-        #     output(self.config._config.options(section))
+    # for o in self.config._config:
+    #     output(o)
+    # self.config._config.add_section("Console UI")
+    # self.config._config.set("Console UI", "fg", "green")
+    # section = " ".join(words)
+    # if section in self.config._config:
+    #     output(self.config._config.options(section))
 
 
 class ExitCommand(Command):
@@ -57,6 +60,7 @@ class ExitCommand(Command):
 
     def handle(self, output, words=None):
         get_app().exit(0)
+        return True
 
 
 class LookupCommand(Command):
@@ -80,6 +84,7 @@ class LookupCommand(Command):
         else:
             output = f"'{lookup}' not found"
         output(output)
+        return True
 
 
 class ToggleTapeCommand(Command):
@@ -92,6 +97,7 @@ class ToggleTapeCommand(Command):
         show = self.toggler()
         self.engine.config = {"show_stroke_display": show}
         output(f"Show tape: {show}")
+        return True
 
 
 class ToggleSuggestionsCommand(Command):
@@ -104,6 +110,7 @@ class ToggleSuggestionsCommand(Command):
         show = self.toggler()
         self.engine.config = {"show_suggestions_display": show}
         output(f"Show suggestions: {show}")
+        return True
 
 
 class ResetMachineCommand(Command):
@@ -114,6 +121,7 @@ class ResetMachineCommand(Command):
     def handle(self, output, words=None):
         output("Resetting machine...")
         self.resetter()
+        return True
 
 
 class ToggleOutputCommand(Command):
@@ -127,6 +135,7 @@ class ToggleOutputCommand(Command):
         else:
             self.engine.output = True
         output("Output: " + str(self.engine.output))
+        return True
 
 
 # TODO probably also belongs under 'config'
@@ -140,6 +149,7 @@ class SetMachineCommand(Command):
         new_machine = " ".join(words)
         output(f"Setting machine to {new_machine}")
         self.engine.config = {"machine_type": new_machine}
+        return True
 
 
 class TopCommand(Command):
