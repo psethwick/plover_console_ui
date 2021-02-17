@@ -26,7 +26,6 @@ class Commander:
         if not words:
             if self.state:
                 exiting = self.state.pop()
-                # TODO find the handler's exit method
                 self.output(f"Exit {exiting}")
             return
 
@@ -44,18 +43,17 @@ class Commander:
                     found_command = True
                     local_state.append(c.name)
                     handler = c
+                    c.on_enter(self.output)
                     _ = cmdline.pop(0)
                     possible_command = peek(cmdline)
                     break
             if not found_command:
                 end_of_line = True
 
-        self.output("cmdline: " + " ".join(cmdline))
-        self.output("localstate: " + " ".join(local_state))
-        self.output("state: " + " ".join(self.state))
-        self.output("handler: " + str(handler.name))
-        #        if not cmdline:
-        #            self.state = local_state
+        # self.output("cmdline: " + " ".join(cmdline))
+        # self.output("localstate: " + " ".join(local_state))
+        # self.output("state: " + " ".join(self.state))
+        # self.output("handler: " + str(handler.name))
 
         if not handler.handle(self.output, cmdline):
             self.state = local_state

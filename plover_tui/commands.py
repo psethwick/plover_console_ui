@@ -19,11 +19,8 @@ class Command(metaclass=ABCMeta):
     def on_enter(output, self):
         pass
 
-    def on_exit(output, self):
-        pass
-
     def handle(self, output, words=None):
-        output("Not supported: " + " ".join(words))
+        output("Unsupported command: " + " ".join(words))
         return False
 
 
@@ -152,13 +149,16 @@ class SetMachineCommand(Command):
         return True
 
 
-class TopCommand(Command):
-    def __init__(self, sub_commands) -> None:
-        super().__init__(None, sub_commands=sub_commands)
+class ContainerCommand(Command):
+    def __init__(self, name, sub_commands) -> None:
+        super().__init__(name, sub_commands=sub_commands)
+    
+    def handle(self, output, words):
+        return False
 
 
 def build_commands(engine, layout):
-    return TopCommand(
+    return ContainerCommand(
         [
             # dictionary?
             LookupCommand(engine),
@@ -166,7 +166,7 @@ def build_commands(engine, layout):
             ResetMachineCommand(engine.reset_machine),
             ToggleOutputCommand(engine),
             # this could do more stuff
-            ConfigCommand(engine._config, [ColorCommand()]),
+            ContainerCommand("configure", [ColorCommand()]),
             SetMachineCommand(engine),
             # UI? (maybe color in here)
             ToggleTapeCommand(layout.toggle_tape, engine),
