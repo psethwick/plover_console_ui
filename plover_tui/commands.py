@@ -33,7 +33,7 @@ class UICommands(Command):
 
 
 class ColorCommand(Command):
-    """sets foreground color of console"""
+    """sets foreground color of console (web colors or hexes should work)"""
 
     def __init__(self, output, config) -> None:
         self.config = config
