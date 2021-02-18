@@ -21,6 +21,7 @@ class HelpCommand(Command):
             self.output("Sub commands:")
             for sc in handler.sub_commands:
                 self.output(sc.name)
+        return True
 
 
 def build_meta_commands(commander):
@@ -52,10 +53,11 @@ class Commander:
         done = False
         while not done:
             handler = next(h for h in handler.sub_commands if h.name == handler_name)
-            if not handler.sub_commands:
+            if not handler.sub_commands or not state:
                 done = True
             else:
                 handler_name = state.pop(0)
+        return handler
 
     def handle_command(self, words):
         if not words:
