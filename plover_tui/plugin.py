@@ -11,6 +11,7 @@ from plover.log import __logger
 from .tuiengine import TuiEngine
 from .notification import TuiNotificationHandler
 from .presentation import layout, application, style_colored
+from .config import get
 
 
 def show_error(title, message):
@@ -55,12 +56,10 @@ def main(config: Config):
     if engine.config["show_suggestions_display"]:
         layout.toggle_suggestions()
 
-    # TODO refactor this to be less... gross
-    if engine._config._config["Console UI"]:
-        if engine._config._config["Console UI"]["fg"]:
-            application.style = style_colored(
-                engine._config._config["Console UI"]["fg"]
-            )
+    fg =get(engine._config, "fg") 
+
+    if fg:
+        application.style = style_colored(fg)
 
     quitting = Event()
     engine.hook_connect("quit", quitting.set)

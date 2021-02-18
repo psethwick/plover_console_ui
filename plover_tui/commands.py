@@ -7,6 +7,7 @@ from plover.registry import registry
 
 from .suggestions import format_suggestions
 from .presentation import style_colored
+from .config import set
 
 
 class Command(metaclass=ABCMeta):
@@ -34,18 +35,17 @@ class UICommands(Command):
 class ColorCommand(Command):
     """sets foreground color of console"""
 
-    def __init__(self, output, engine) -> None:
-        self.engine = engine
+    def __init__(self, output, config) -> None:
+        self.config = config
         super().__init__("color", output)
 
     def handle(self, words=None):
         if words:
             color = words[0]
             get_app().style = style_colored(color)
-            # TODO un-uggo this
-            if not self.engine._config._config.has_section("Console UI"):
-                self.engine._config._config.add_section("Console UI")
-            self.engine._config._config.set("Console UI", "fg", color)
+            # above line will throw if it's a bad color
+            # it's ok to set it in config now
+            set(self.config, "fg", color)
             return True
         return False
 
@@ -216,7 +216,7 @@ def build_commands(engine, layout):
                 [
                     ToggleTapeCommand(output, layout.toggle_tape, engine),
                     ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
-                    ColorCommand(output, engine),
+                    ColorCommand(output, engine._config),
                 ],
             ),
             ExitCommand(output),
