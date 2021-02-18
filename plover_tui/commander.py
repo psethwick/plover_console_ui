@@ -66,8 +66,7 @@ class Commander:
     def handle_command(self, words):
         if not words:
             if self.state:
-                exiting = self.state.pop()
-                self.output(f"Exit {exiting}")
+                self.state.clear()
             return
 
         if self.handled_meta_command(words):

@@ -24,12 +24,7 @@ class Command(metaclass=ABCMeta):
         return False
 
 
-class ContainerCommand(Command):
-    def __init__(self, name, output, sub_commands) -> None:
-        super().__init__(name, output, sub_commands=sub_commands)
-
-
-class UICommands(ContainerCommand):
+class UICommands(Command):
     """commands for user interface"""
 
     def __init__(self, output, sub_commands) -> None:
@@ -157,7 +152,7 @@ class ToggleOutputCommand(Command):
         return True
 
 
-class MachineCommand(ContainerCommand):
+class MachineCommand(Command):
     """set machine commands"""
 
     def __init__(self, output, engine) -> None:
@@ -180,7 +175,7 @@ class MachineSetterCommand(Command):
         return True
 
 
-class ConfigureCommand(ContainerCommand):
+class ConfigureCommand(Command):
     """configuration commands"""
 
     def __init__(self, output, sub_commands) -> None:
@@ -189,21 +184,20 @@ class ConfigureCommand(ContainerCommand):
 
 def build_commands(engine, layout):
     output = layout.output_to_console
-    return ContainerCommand(
+    return Command(
         name=None,
         output=output,
         sub_commands=[
-            # dictionary?
-            LookupCommand(output, engine),
-            ExitCommand(output),
-            ResetMachineCommand(output, engine.reset_machine),
-            ToggleOutputCommand(output, engine),
             ConfigureCommand(
                 output,
                 [
                     MachineCommand(output, engine),
                 ],
             ),
+            # dictionary?
+            LookupCommand(output, engine),
+            ResetMachineCommand(output, engine.reset_machine),
+            ToggleOutputCommand(output, engine),
             UICommands(
                 output,
                 [
@@ -212,5 +206,6 @@ def build_commands(engine, layout):
                     ColorCommand(output),
                 ],
             ),
+            ExitCommand(output),
         ],
     )
