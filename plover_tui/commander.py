@@ -16,11 +16,11 @@ class HelpCommand(Command):
 
     def handle(self, words=None):
         handler = self.commander.current_handler()
-        self.output(f"Current: {handler.name}")
         if handler.sub_commands:
-            self.output("Sub commands:")
             for sc in handler.sub_commands:
-                self.output(sc.name)
+                self.output(f"{sc.name} - {sc.__doc__}")
+        else:
+            self.output(f"{handler.name} - {handler.__doc__}")
         return True
 
 
@@ -69,35 +69,32 @@ class Commander:
         if self.handled_meta_command(words):
             return
 
-        cmdline = self.state[:] + words
+        local_state = self.state[:]
+        handler = self.current_handler()
 
-        possible_command = peek(cmdline)
-
-        end_of_line = False
-        local_state = []
-        handler = self.top_command
-
-        while possible_command and not end_of_line:
+        possible_command = peek(words)
+        done = False
+        while possible_command and not done:
             found_command = False
             for c in handler.sub_commands:
-                if c.name.startswith(possible_command):
+                if c.name.startswith(possible_command.lower()):
                     found_command = True
                     local_state.append(c.name)
                     handler = c
                     c.on_enter()
-                    _ = cmdline.pop(0)
-                    possible_command = peek(cmdline)
+                    _ = words.pop(0)
+                    possible_command = peek(words)
                     break
             if not found_command:
-                end_of_line = True
+                done = True
 
-        if not handler.handle(cmdline):
+        if not handler.handle(words):
             self.state = local_state
 
     def handled_meta_command(self, words):
         possible_meta = peek(words)
         for meta in self.meta_commands:
-            if meta.name.startswith(possible_meta):
+            if meta.name.startswith(possible_meta.lower()):
                 meta.handle(words)
                 return True
         return False

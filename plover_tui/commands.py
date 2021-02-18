@@ -27,6 +27,8 @@ class Command(metaclass=ABCMeta):
 
 
 class ColorCommand(Command):
+    """sets foreground color of console"""
+
     def __init__(self, output) -> None:
         super().__init__("color", output)
 
@@ -54,6 +56,8 @@ class ColorCommand(Command):
 
 
 class ExitCommand(Command):
+    """exits plover"""
+
     def __init__(self, output):
         super().__init__("exit", output)
 
@@ -63,15 +67,15 @@ class ExitCommand(Command):
 
 
 class LookupCommand(Command):
-    """
-    TODO this could live under a 'dictionary' command
-    """
+    """looks up words in current dictionaries"""
 
     def __init__(self, output, engine):
         self.engine = engine
         super().__init__("lookup", output)
 
     def handle(self, words):
+        if not words:
+            return False
         text = " ".join(words)
         lookup = unescape_translation(text)
         suggestions = format_suggestions(self.engine.get_suggestions(lookup))
@@ -83,6 +87,8 @@ class LookupCommand(Command):
 
 
 class ToggleTapeCommand(Command):
+    """turns paper tape pane on/off"""
+
     def __init__(self, output, toggler, engine):
         self.toggler = toggler
         self.engine = engine
@@ -96,6 +102,8 @@ class ToggleTapeCommand(Command):
 
 
 class ToggleSuggestionsCommand(Command):
+    """turns suggestions pane on/off"""
+
     def __init__(self, output, toggler, engine):
         self.toggler = toggler
         self.engine = engine
@@ -109,6 +117,8 @@ class ToggleSuggestionsCommand(Command):
 
 
 class ResetMachineCommand(Command):
+    """reconnects current machine"""
+
     def __init__(self, output, resetter):
         self.resetter = resetter
         super().__init__("reset", output)
@@ -120,6 +130,8 @@ class ResetMachineCommand(Command):
 
 
 class ToggleOutputCommand(Command):
+    """toggles plover output on/off"""
+
     def __init__(self, output, engine):
         self.engine = engine
         super().__init__("output", output)
@@ -138,11 +150,15 @@ class ToggleOutputCommand(Command):
 # TODO probably also belongs under 'config'
 # TODO needs to be able to set the various machine parameter thingies
 class SetMachineCommand(Command):
+    """machine commands"""
+
     def __init__(self, output, engine):
         self.engine = engine
         super().__init__("machine", output)
 
     def handle(self, words=None):
+        if not words:
+            return False
         new_machine = " ".join(words)
         self.output(f"Setting machine to {new_machine}")
         self.engine.config = {"machine_type": new_machine}
@@ -152,6 +168,12 @@ class SetMachineCommand(Command):
 class ContainerCommand(Command):
     def __init__(self, name, output, sub_commands) -> None:
         super().__init__(name, output, sub_commands=sub_commands)
+
+
+class ConfigureCommand(ContainerCommand):
+    """configuration commands"""
+    def __init__(self, output, sub_commands) -> None:
+        super().__init__("configure", output, sub_commands)
 
 
 def build_commands(engine, layout):
@@ -166,7 +188,7 @@ def build_commands(engine, layout):
             ResetMachineCommand(output, engine.reset_machine),
             ToggleOutputCommand(output, engine),
             # this could do more stuff
-            ContainerCommand("configure", output, [ColorCommand(output)]),
+            ConfigureCommand(output, [ColorCommand(output)]),
             SetMachineCommand(output, engine),
             # UI? (maybe color in here)
             ToggleTapeCommand(output, layout.toggle_tape, engine),

@@ -14,13 +14,10 @@ from .commands import build_commands
 def status_bar_text(engine) -> str:
     return (
         " | Plover"
-        " | Machine: "
-        + engine.config["machine_type"]
-        + " | Output: "
-        + str(engine.output)
-        + " | System: "
-        + engine.config["system_name"]
-        + " |"
+        f" | Machine: {engine.config['machine_type']}"
+        f" | Output: {'Enabled' if engine.output else 'Disabled'}"
+        f" | System: { engine.config['system_name']}"
+        " |"
     )
 
 
