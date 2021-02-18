@@ -43,7 +43,7 @@ class Commander:
                     found_command = True
                     local_state.append(c.name)
                     handler = c
-                    c.on_enter(self.output)
+                    c.on_enter()
                     _ = cmdline.pop(0)
                     possible_command = peek(cmdline)
                     break
@@ -55,7 +55,7 @@ class Commander:
         # self.output("state: " + " ".join(self.state))
         # self.output("handler: " + str(handler.name))
 
-        if not handler.handle(self.output, cmdline):
+        if not handler.handle(cmdline):
             self.state = local_state
 
     def prompt(self):
