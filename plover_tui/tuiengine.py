@@ -36,6 +36,12 @@ class TuiEngine(StenoEngine, Thread):
         self.hook_connect("add_translation", partial(layout.on_add_translation, self))
         cmder = Commander(build_commands(self, layout), layout.output_to_console)
 
+        def on_lookup():
+            layout.focus_tui()
+            cmder.set_state(["lookup"], layout.exit_modal)
+
+        self.hook_connect("lookup", on_lookup)
+
         layout.cmder_input.control.input_processors.append(
             BeforeInput(cmder.prompt, style="class:text-area.prompt"),
         )

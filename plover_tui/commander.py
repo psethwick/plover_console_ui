@@ -32,6 +32,7 @@ class Commander:
     def __init__(self, top_command, output) -> None:
         self.top_command = top_command
         self.output = output
+        self.on_exit_state = None
         self.state = []
         self.meta_commands = build_meta_commands(self)
 
@@ -43,6 +44,10 @@ class Commander:
 
         except BaseException as e:
             self.output(f"Error: {e}")
+
+    def set_state(self, state, on_exit=None):
+        self.state = state
+        self.on_exit_state = on_exit
 
     def current_handler(self):
         handler = self.top_command
@@ -66,6 +71,8 @@ class Commander:
     def handle_command(self, words):
         if not words:
             if self.state:
+                if self.on_exit_state:
+                    self.on_exit_state()
                 self.state.clear()
             return
 

@@ -4,9 +4,8 @@ from prompt_toolkit.layout.containers import HSplit
 from prompt_toolkit.widgets import TextArea
 from prompt_toolkit.application import get_app
 
-from plover import log
 from plover.steno import sort_steno_strokes
-from plover.translation import escape_translation, unescape_translation
+from plover.translation import escape_translation
 from plover.formatting import RetroFormatter
 
 
