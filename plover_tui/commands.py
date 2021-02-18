@@ -1,14 +1,12 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
 from prompt_toolkit.application import get_app
 
 from plover.translation import unescape_translation
+from plover.registry import registry
 
 from .suggestions import format_suggestions
 from .presentation import style_colored
-
-# TODO each command describes itself
-# TODO special 'help' command that exists at every level (describes available)
 
 
 class Command(metaclass=ABCMeta):
@@ -24,6 +22,18 @@ class Command(metaclass=ABCMeta):
         if words:
             self.output("Unsupported command: " + " ".join(words))
         return False
+
+
+class ContainerCommand(Command):
+    def __init__(self, name, output, sub_commands) -> None:
+        super().__init__(name, output, sub_commands=sub_commands)
+
+
+class UICommands(ContainerCommand):
+    """commands for user interface"""
+
+    def __init__(self, output, sub_commands) -> None:
+        super().__init__("ui", output, sub_commands)
 
 
 class ColorCommand(Command):
@@ -147,31 +157,32 @@ class ToggleOutputCommand(Command):
         return True
 
 
-# TODO probably also belongs under 'config'
-# TODO needs to be able to set the various machine parameter thingies
-class SetMachineCommand(Command):
-    """machine commands"""
+class MachineCommand(ContainerCommand):
+    """set machine commands"""
 
-    def __init__(self, output, engine):
+    def __init__(self, output, engine) -> None:
+        sub_commands = [
+            MachineSetterCommand(p.name, output, engine)
+            for p in registry.list_plugins("machine")
+        ]
+        super().__init__("machine", output, sub_commands)
+
+
+class MachineSetterCommand(Command):
+    def __init__(self, machine_name, output, engine) -> None:
         self.engine = engine
-        super().__init__("machine", output)
+        self.__doc__ = f"sets machine to {machine_name}"
+        super().__init__(machine_name, output)
 
     def handle(self, words=None):
-        if not words:
-            return False
-        new_machine = " ".join(words)
-        self.output(f"Setting machine to {new_machine}")
-        self.engine.config = {"machine_type": new_machine}
+        self.output(f"Setting machine to {self.name}")
+        self.engine.config = {"machine_type": self.name}
         return True
-
-
-class ContainerCommand(Command):
-    def __init__(self, name, output, sub_commands) -> None:
-        super().__init__(name, output, sub_commands=sub_commands)
 
 
 class ConfigureCommand(ContainerCommand):
     """configuration commands"""
+
     def __init__(self, output, sub_commands) -> None:
         super().__init__("configure", output, sub_commands)
 
@@ -187,11 +198,19 @@ def build_commands(engine, layout):
             ExitCommand(output),
             ResetMachineCommand(output, engine.reset_machine),
             ToggleOutputCommand(output, engine),
-            # this could do more stuff
-            ConfigureCommand(output, [ColorCommand(output)]),
-            SetMachineCommand(output, engine),
-            # UI? (maybe color in here)
-            ToggleTapeCommand(output, layout.toggle_tape, engine),
-            ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
+            ConfigureCommand(
+                output,
+                [
+                    MachineCommand(output, engine),
+                ],
+            ),
+            UICommands(
+                output,
+                [
+                    ToggleTapeCommand(output, layout.toggle_tape, engine),
+                    ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
+                    ColorCommand(output),
+                ],
+            ),
         ],
     )

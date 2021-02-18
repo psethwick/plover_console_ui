@@ -52,7 +52,11 @@ class Commander:
         handler_name = state.pop(0)
         done = False
         while not done:
-            handler = next(h for h in handler.sub_commands if h.name == handler_name)
+            handler = next(
+                h
+                for h in handler.sub_commands
+                if h.name.lower() == handler_name.lower()
+            )
             if not handler.sub_commands or not state:
                 done = True
             else:
@@ -77,7 +81,7 @@ class Commander:
         while possible_command and not done:
             found_command = False
             for c in handler.sub_commands:
-                if c.name.startswith(possible_command.lower()):
+                if c.name.lower().startswith(possible_command.lower()):
                     found_command = True
                     local_state.append(c.name)
                     handler = c
@@ -94,7 +98,7 @@ class Commander:
     def handled_meta_command(self, words):
         possible_meta = peek(words)
         for meta in self.meta_commands:
-            if meta.name.startswith(possible_meta.lower()):
+            if meta.name.lower().startswith(possible_meta.lower()):
                 meta.handle(words)
                 return True
         return False
