@@ -8,8 +8,7 @@ class TuiNotificationHandler(logging.Handler):
     def __init__(self, on_output):
         super().__init__()
         self._on_output = on_output
-        # do we care about the level?
-        # self.setLevel(log.WARNING)
+        self.setLevel(log.WARNING)
         self.setFormatter(
             log.NoExceptionTracebackFormatter("%(levelname)s: %(message)s")
         )

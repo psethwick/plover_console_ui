@@ -36,7 +36,7 @@ def main(config: Config):
     log.remove_handler(__logger._print_handler)
 
     # mor hax ... I don't wanna see QT notifications
-    # TODO this does not seem to actually remove it
+    log.remove_handler(__logger._platform_handler)
     __logger._platform_handler = None
 
     # lets set up something better
