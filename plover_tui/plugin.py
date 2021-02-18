@@ -10,11 +10,7 @@ from plover.log import __logger
 
 from .tuiengine import TuiEngine
 from .notification import TuiNotificationHandler
-from .presentation import layout, application
-
-
-# TODO tui options?
-# TODO layout switch hor/ver
+from .presentation import layout, application, style_colored
 
 
 def show_error(title, message):
@@ -25,6 +21,8 @@ def show_error(title, message):
 
 
 def config_saver(config: Config, output, update):
+    # TODO once I've finished config, remove this logging
+    # or at least trim it a bit
     output(f"Saving config: {update}")
     with open(config.target_file, "wb") as f:
         config.save(f)
@@ -56,6 +54,13 @@ def main(config: Config):
 
     if engine.config["show_suggestions_display"]:
         layout.toggle_suggestions()
+
+    # TODO refactor this to be less... gross
+    if engine._config._config["Console UI"]:
+        if engine._config._config["Console UI"]["fg"]:
+            application.style = style_colored(
+                engine._config._config["Console UI"]["fg"]
+            )
 
     quitting = Event()
     engine.hook_connect("quit", quitting.set)

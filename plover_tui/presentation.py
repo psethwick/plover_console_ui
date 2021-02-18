@@ -126,16 +126,22 @@ def _(event):
     event.app.exit(0)
 
 
-def style_colored(color) -> Style:
+def style_colored(color=None) -> Style:
+    if color:
+        return Style.from_dict(
+            {
+                "status": f"fg:{color} reverse",
+                "normal": f"fg:{color}",
+            }
+    )
     return Style.from_dict(
         {
-            "status": f"fg:{color} reverse",
-            "normal": f"fg:{color}",
+            "status": "reverse",
         }
     )
 
 
-style = style_colored("goldenrod")
+style = style_colored()
 
 layout = TuiLayout(focus)
 

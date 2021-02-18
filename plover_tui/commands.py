@@ -34,30 +34,20 @@ class UICommands(Command):
 class ColorCommand(Command):
     """sets foreground color of console"""
 
-    def __init__(self, output) -> None:
+    def __init__(self, output, engine) -> None:
+        self.engine = engine
         super().__init__("color", output)
 
     def handle(self, words=None):
         if words:
-            get_app().style = style_colored(words[0])
+            color = words[0]
+            get_app().style = style_colored(color)
+            # TODO un-uggo this
+            if not self.engine._config._config.has_section("Console UI"):
+                self.engine._config._config.add_section("Console UI")
+            self.engine._config._config.set("Console UI", "fg", color)
             return True
         return False
-
-
-# class ConfigCommand(Command):
-#     def __init__(self, config, sub_commands) -> None:
-#         self.config = config
-#         super().__init__("configure", sub_commands)
-
-# def handle(self, output, words):
-#    pass
-# for o in self.config._config:
-#     output(o)
-# self.config._config.add_section("Console UI")
-# self.config._config.set("Console UI", "fg", "green")
-# section = " ".join(words)
-# if section in self.config._config:
-#     output(self.config._config.options(section))
 
 
 class ExitCommand(Command):
@@ -175,11 +165,33 @@ class MachineSetterCommand(Command):
         return True
 
 
+# TODO implement config in a somewhat generic manner
+# class ConfigCommand(Command):
+#     def __init__(self, config, sub_commands) -> None:
+#         self.config = config
+#         super().__init__("configure", sub_commands)
+
+# def handle(self, output, words):
+#    pass
+# for o in self.config._config:
+#     output(o)
+# self.config._config.add_section("Console UI")
+# self.config._config.set("Console UI", "fg", "green")
+# section = " ".join(words)
+# if section in self.config._config:
+#     output(self.config._config.options(section))
+
+
 class ConfigureCommand(Command):
     """configuration commands"""
 
-    def __init__(self, output, sub_commands) -> None:
+    def __init__(self, output, sub_commands, engine) -> None:
+        self.engine = engine
         super().__init__("configure", output, sub_commands)
+
+    def handle(self, words=None):
+        self.output(self.engine._config._config["Console UI"])
+        return False
 
 
 def build_commands(engine, layout):
@@ -193,6 +205,7 @@ def build_commands(engine, layout):
                 [
                     MachineCommand(output, engine),
                 ],
+                engine,
             ),
             # dictionary?
             LookupCommand(output, engine),
@@ -203,7 +216,7 @@ def build_commands(engine, layout):
                 [
                     ToggleTapeCommand(output, layout.toggle_tape, engine),
                     ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
-                    ColorCommand(output),
+                    ColorCommand(output, engine),
                 ],
             ),
             ExitCommand(output),
