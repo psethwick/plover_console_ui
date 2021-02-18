@@ -1,3 +1,5 @@
+# TODO it is unclear whether doing it manually (like this)
+# is better or worse than hacking extra options into plover's config class
 section = "Console UI"
 
 
