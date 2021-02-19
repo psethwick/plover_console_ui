@@ -143,7 +143,7 @@ class ToggleOutputCommand(Command):
 
 
 class MachineCommand(Command):
-    """set machine commands"""
+    """machine commands"""
 
     def __init__(self, output, engine) -> None:
         sub_commands = [
@@ -153,16 +153,37 @@ class MachineCommand(Command):
         super().__init__("machine", output, sub_commands)
 
 
+class MachineOptionsCommand(Command):
+    """machine options"""
+
+    def __init__(self, output, machine_name, engine) -> None:
+        self.engine = engine
+        machine_class = registry.get_plugin("machine", machine_name).obj
+        sub_commands = [
+            MachineOptionSetterCommand(output, machine_name, name, engine)
+            for name in machine_class.get_option_info().keys()
+        ]
+        super().__init__("options", output, sub_commands)
+
+
+class MachineOptionSetterCommand(Command):
+    def __init__(self, output, machine_name, option_name, engine) -> None:
+        self.__doc__ = f"{machine_name} option: {option_name}"
+        super().__init__(option_name, output)
+
+
 class MachineSetterCommand(Command):
     def __init__(self, machine_name, output, engine) -> None:
         self.engine = engine
         self.__doc__ = f"sets machine to {machine_name}"
-        super().__init__(machine_name, output)
+        super().__init__(
+            machine_name, output, [MachineOptionsCommand(output, machine_name, engine)]
+        )
 
     def handle(self, words=None):
         self.output(f"Setting machine to {self.name}")
         self.engine.config = {"machine_type": self.name}
-        return True
+        return False
 
 
 # TODO implement config in a somewhat generic manner
@@ -189,10 +210,6 @@ class ConfigureCommand(Command):
         self.engine = engine
         super().__init__("configure", output, sub_commands)
 
-    def handle(self, words=None):
-        self.output(self.engine._config._config["Console UI"])
-        return False
-
 
 def build_commands(engine, layout):
     output = layout.output_to_console
@@ -203,7 +220,10 @@ def build_commands(engine, layout):
             ConfigureCommand(
                 output,
                 [
-                    MachineCommand(output, engine),
+                    MachineCommand(
+                        output,
+                        engine,
+                    ),
                 ],
                 engine,
             ),
