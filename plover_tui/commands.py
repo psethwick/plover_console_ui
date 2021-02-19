@@ -168,6 +168,9 @@ class MachineOptionsCommand(Command):
 
 class MachineOptionSetterCommand(Command):
     def __init__(self, output, machine_name, option_name, engine) -> None:
+        # TODO implement the setter
+        # TODO show a) default b) current value
+        # TODO probably borrow the 'scan' thingy
         self.__doc__ = f"{machine_name} option: {option_name}"
         super().__init__(option_name, output)
 
