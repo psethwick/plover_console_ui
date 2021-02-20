@@ -8,10 +8,26 @@ from plover.config import Config
 # this will never come back to bite me
 from plover.log import __logger
 
-from .tuiengine import TuiEngine
-from .notification import TuiNotificationHandler
+from .console_engine import ConsoleEngine
+from .notification import ConsoleNotificationHandler
 from .presentation import layout, application, style_colored
 from .config import get
+
+# TODO settle on help vs show stuff on enter
+# TODO finish config
+# TODO dictionary pane
+# TODO dictionary enable/disable
+# TODO add/remove dictionaries
+# TODO format tape
+# TODO readme
+# TODO gifs for readme
+# TODO rename to console-ui
+# TODO attribute bits borrowed from plover source
+# TODO publish pipeline + sanity checks
+# TODO work out why windows is broke and at least document
+# TODO minimise windows-launcher
+# post mvp
+# TODO completers? Buffer.completer
 
 
 def show_error(title, message):
@@ -25,8 +41,11 @@ def config_saver(config: Config, output, update):
     # TODO once I've finished config, remove this logging
     # or at least trim it a bit
     output(f"Saving config: {update}")
-    with open(config.target_file, "wb") as f:
-        config.save(f)
+    # only necessary if version of plover is older than the config fixes
+    # probably will remove this after 4.0.0 released
+    if hasattr(config, "target_file"):
+        with open(config.target_file, "wb") as f:
+            config.save(f)
 
 
 def main(config: Config):
@@ -39,15 +58,16 @@ def main(config: Config):
     __logger._platform_handler = None
 
     # lets set up something better
-    log.add_handler(TuiNotificationHandler(layout.output_to_console))
+    log.add_handler(ConsoleNotificationHandler(layout.output_to_console))
 
-    engine = TuiEngine(config, KeyboardEmulation(), layout)
+    engine = ConsoleEngine(config, KeyboardEmulation(), layout)
 
     if not engine.load_config():
         return 3
 
     engine.hook_connect(
-        "config_changed", partial(config_saver, config, layout.output_to_console)
+        "config_changed",
+        partial(config_saver, config, layout.output_to_console),
     )
 
     if engine.config["show_stroke_display"]:
@@ -56,7 +76,7 @@ def main(config: Config):
     if engine.config["show_suggestions_display"]:
         layout.toggle_suggestions()
 
-    fg =get(engine._config, "fg") 
+    fg = get(engine._config, "fg")
 
     if fg:
         application.style = style_colored(fg)

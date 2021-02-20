@@ -1,7 +1,5 @@
 from functools import partial
 
-from plover_tui.suggestions import on_translated
-from plover_tui.presentation import TuiLayout
 from threading import Thread, current_thread
 
 from plover.engine import StenoEngine
@@ -9,6 +7,8 @@ from prompt_toolkit.layout.processors import BeforeInput
 
 from .commander import Commander
 from .commands import build_commands
+from .suggestions import on_translated
+from .presentation import ConsoleLayout
 
 
 def status_bar_text(engine) -> str:
@@ -21,8 +21,8 @@ def status_bar_text(engine) -> str:
     )
 
 
-class TuiEngine(StenoEngine, Thread):
-    def __init__(self, config, keyboard_emulation, layout: TuiLayout):
+class ConsoleEngine(StenoEngine, Thread):
+    def __init__(self, config, keyboard_emulation, layout: ConsoleLayout):
         StenoEngine.__init__(self, config, keyboard_emulation)
         Thread.__init__(self)
         self.name += "-engine"
@@ -31,13 +31,13 @@ class TuiEngine(StenoEngine, Thread):
         self.hook_connect(
             "stroked", lambda stroke: layout.output_to_tape(stroke.rtfcre)
         )
-        self.hook_connect("focus", layout.focus_tui)
+        self.hook_connect("focus", layout.focus_console)
         self.hook_connect("translated", self.on_translated)
         self.hook_connect("add_translation", partial(layout.on_add_translation, self))
         cmder = Commander(build_commands(self, layout), layout.output_to_console)
 
         def on_lookup():
-            layout.focus_tui()
+            layout.focus_console()
             cmder.set_state(["lookup"], layout.exit_modal)
 
         self.hook_connect("lookup", on_lookup)

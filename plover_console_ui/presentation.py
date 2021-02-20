@@ -25,6 +25,7 @@ def output_to_buffer_position(buffer, position, text):
     get_app().invalidate()
 
 
+# TODO maybe a slanted version of this?
 plover_text = """ _____  _
 |  __ \| |
 | |__) | | _____   _____ _ __
@@ -34,7 +35,7 @@ plover_text = """ _____  _
 """
 
 
-class TuiLayout:
+class ConsoleLayout:
     def __init__(self, focus) -> None:
         self.focus = focus
         self.cmder_input = TextArea(
@@ -91,9 +92,9 @@ class TuiLayout:
             self.outputs.append(item)
             return True
 
-    def focus_tui(self):
+    def focus_console(self):
         self.focus.set_prev()
-        self.focus.tui()
+        self.focus.console()
 
     def exit_modal(self):
         self.input = self.cmder_input
@@ -101,7 +102,7 @@ class TuiLayout:
         self.focus.prev()
 
     def on_add_translation(self, engine):
-        self.focus_tui()
+        self.focus_console()
         at = AddTranslation(
             engine,
             partial(
@@ -143,7 +144,7 @@ def style_colored(color=None) -> Style:
 
 style = style_colored()
 
-layout = TuiLayout(focus)
+layout = ConsoleLayout(focus)
 
 application = Application(
     layout=Layout(DynamicContainer(layout), focused_element=layout.input),

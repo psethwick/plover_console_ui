@@ -4,7 +4,7 @@ section = "Console UI"
 
 
 def get(config, option):
-    if config._config[section]:
+    if config._config.has_section(section):
         if config._config[section][option]:
             return config._config[section][option]
     return None

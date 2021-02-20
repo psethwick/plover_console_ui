@@ -2,12 +2,12 @@ from plover import log
 from plover.log import logging
 
 
-class TuiNotificationHandler(logging.Handler):
-    """ Handler using tui output_field to show messages. """
+class ConsoleNotificationHandler(logging.Handler):
+    """ Handler using console to show messages. """
 
-    def __init__(self, on_output):
+    def __init__(self, output):
         super().__init__()
-        self._on_output = on_output
+        self.output = output
         self.setLevel(log.WARNING)
         self.setFormatter(
             log.NoExceptionTracebackFormatter("%(levelname)s: %(message)s")
@@ -17,4 +17,4 @@ class TuiNotificationHandler(logging.Handler):
         message = self.format(record)
         if message.endswith("\n"):
             message = message[:-1]
-        self._on_output(message)
+        self.output(message)

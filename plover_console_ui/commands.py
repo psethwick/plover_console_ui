@@ -153,6 +153,29 @@ class MachineCommand(Command):
         super().__init__("machine", output, sub_commands)
 
 
+class SystemCommand(Command):
+    """system commands"""
+
+    def __init__(self, output, engine) -> None:
+        sub_commands = [
+            SystemSetterCommand(p.name, output, engine)
+            for p in registry.list_plugins("system")
+        ]
+        super().__init__("system", output, sub_commands)
+
+
+class SystemSetterCommand(Command):
+    def __init__(self, system_name, output, engine) -> None:
+        self.engine = engine
+        self.__doc__ = f"sets system to {system_name}"
+        super().__init__(system_name, output)
+
+    def handle(self, words=None):
+        self.output(f"Setting system to {self.name}")
+        self.engine.config = {"system_name": self.name}
+        return True
+
+
 class MachineOptionsCommand(Command):
     """machine options"""
 
@@ -227,6 +250,10 @@ def build_commands(engine, layout):
                         output,
                         engine,
                     ),
+                    SystemCommand(
+                        output,
+                        engine
+                    )
                 ],
                 engine,
             ),
