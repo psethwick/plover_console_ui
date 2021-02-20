@@ -84,10 +84,8 @@ class ConsoleLayout:
                 for k in self._all_keys
             ]
             self._numbers = set(system.NUMBERS.values())
-            # TODO should have header??
-#            self.header.setText(self._all_keys)
 
-# TODO attribute
+    # TODO attribute
     def output_to_tape(self, stroke):
         text = self._all_keys_filler * 1
         keys = stroke.steno_keys[:]

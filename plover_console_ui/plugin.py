@@ -13,7 +13,8 @@ from .notification import ConsoleNotificationHandler
 from .presentation import layout, application, style_colored
 from .config import get
 
-# TODO finish config
+# TODO finish machine options
+# TODO finish rest of config
 # TODO dictionary pane
 # TODO dictionary enable/disable
 # TODO add/remove dictionaries

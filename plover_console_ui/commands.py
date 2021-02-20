@@ -1,4 +1,5 @@
 from abc import ABCMeta
+from functools import partial
 
 from prompt_toolkit.application import get_app
 
@@ -34,7 +35,7 @@ class Command(metaclass=ABCMeta):
         return False
 
 
-class UICommands(Command):
+class UiCommands(Command):
     """commands for user interface"""
 
     def __init__(self, output, sub_commands) -> None:
@@ -192,19 +193,26 @@ class MachineOptionsCommand(Command):
         self.engine = engine
         machine_class = registry.get_plugin("machine", machine_name).obj
         sub_commands = [
-            MachineOptionSetterCommand(output, machine_name, name, engine)
-            for name in machine_class.get_option_info().keys()
+            MachineOptionSetterCommand(output, machine_name, config_option, engine)
+            for config_option in machine_class.get_option_info()
         ]
         super().__init__("options", output, sub_commands)
 
 
 class MachineOptionSetterCommand(Command):
-    def __init__(self, output, machine_name, option_name, engine) -> None:
+    def __init__(self, output, machine_name, config_option, engine) -> None:
         # TODO implement the setter
         # TODO show a) default b) current value
         # TODO probably borrow the 'scan' thingy
-        self.__doc__ = f"{machine_name} option: {option_name}"
-        super().__init__(option_name, output)
+        # TODO this sucks
+        self.__doc__ = f"setting: {config_option.name} - default: {config_option.default}"
+        self.getter = partial(config_option.getter, engine.config, config_option.name)
+        self.setter = partial(config_option.setter, engine.config, config_option.name)
+
+    def handle(self, words=None):
+        self.output("current: " + self.getter())
+        self.setter("".join(words))
+        return True
 
 
 class MachineSetterCommand(Command):
@@ -270,7 +278,7 @@ def build_commands(engine, layout):
             LookupCommand(output, engine),
             ResetMachineCommand(output, engine.reset_machine),
             ToggleOutputCommand(output, engine),
-            UICommands(
+            UiCommands(
                 output,
                 [
                     ToggleTapeCommand(output, layout.toggle_tape, engine),
