@@ -13,15 +13,12 @@ from .notification import ConsoleNotificationHandler
 from .presentation import layout, application, style_colored
 from .config import get
 
-# TODO settle on help vs show stuff on enter
 # TODO finish config
 # TODO dictionary pane
 # TODO dictionary enable/disable
 # TODO add/remove dictionaries
-# TODO format tape
 # TODO readme
 # TODO gifs for readme
-# TODO rename to console-ui
 # TODO attribute bits borrowed from plover source
 # TODO publish pipeline + sanity checks
 # TODO work out why windows is broke and at least document

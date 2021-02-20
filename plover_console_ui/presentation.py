@@ -1,3 +1,4 @@
+from wcwidth import wcwidth
 from functools import partial
 
 from prompt_toolkit.layout.layout import Layout
@@ -12,6 +13,7 @@ from prompt_toolkit.styles import Style
 from .focus import Focus
 from .addtranslation import AddTranslation
 
+from plover import system
 
 def output_to_buffer(buffer, text):
     o = f"{buffer.text}\n{text}"
@@ -66,11 +68,36 @@ class ConsoleLayout:
             ]
         )
 
+        # support paper tape
+        self._all_keys = None
+        self._all_keys_filler = None
+
     def __call__(self):
         return self.container
 
-    def output_to_tape(self, text):
-        output_to_buffer(self.tape.body.buffer, text)
+    # TODO attribute
+    def on_config_changed(self, update):
+        if 'system_name' in update:
+            self._all_keys = ''.join(key.strip('-') for key in system.KEYS)
+            self._all_keys_filler = [
+                ' ' * wcwidth(k)
+                for k in self._all_keys
+            ]
+            self._numbers = set(system.NUMBERS.values())
+            # TODO should have header??
+#            self.header.setText(self._all_keys)
+
+# TODO attribute
+    def output_to_tape(self, stroke):
+        text = self._all_keys_filler * 1
+        keys = stroke.steno_keys[:]
+        if any(key in self._numbers for key in keys):
+            keys.append('#')
+        for key in keys:
+            index = system.KEY_ORDER[key]
+            text[index] = self._all_keys[index]
+
+        output_to_buffer(self.tape.body.buffer, "".join(text))
 
     def output_to_console(self, text):
         output_to_buffer(self.console.body.buffer, text)
@@ -95,6 +122,9 @@ class ConsoleLayout:
     def focus_console(self):
         self.focus.set_prev()
         self.focus.console()
+
+    def focus_toggle(self):
+        self.focus.toggle()
 
     def exit_modal(self):
         self.input = self.cmder_input

@@ -10,6 +10,14 @@ class Focus():
     def reset_console(self) -> None:
         self.console = GetForegroundWindow()
 
+    def toggle(self) -> None:
+        current = GetForegroundWindow()
+        if current == self.console:
+            self.prev()
+        else:
+            self.prev = current
+            self.console()
+
     def set_prev(self):
         self.prev = GetForegroundWindow()
 

@@ -17,11 +17,20 @@ class Command(metaclass=ABCMeta):
         self.sub_commands = sub_commands
 
     def on_enter(self):
+        # TODO do I even need this
         pass
 
     def handle(self, words=None):
+        if self.name:
+            self.output(self.name.capitalize())
+            self.output("".join(["-" for _ in self.name]))
         if words:
             self.output("Unsupported command: " + " ".join(words))
+
+        else:
+            if self.sub_commands:
+                for sc in self.sub_commands:
+                    self.output(f"{sc.name} - {sc.__doc__}")
         return False
 
 

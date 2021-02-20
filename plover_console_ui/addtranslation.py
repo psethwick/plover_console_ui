@@ -9,6 +9,7 @@ from plover.translation import escape_translation
 from plover.formatting import RetroFormatter
 
 
+# TODO attribute
 def dictionary_filter(key, value):
     # Allow undo...
     if value == "=undo":

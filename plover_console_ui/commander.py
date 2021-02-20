@@ -9,6 +9,7 @@ def peek(list):
     return None
 
 
+# TODO should this even exist
 class HelpCommand(Command):
     def __init__(self, commander) -> None:
         self.commander = commander
