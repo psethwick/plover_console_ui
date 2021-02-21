@@ -34,15 +34,9 @@ class Command(metaclass=ABCMeta):
         else:
             if self.sub_commands():
                 for sc in self.sub_commands():
-                    self.output(f"{sc.name} - {sc.__doc__}")
+                    desc = sc.__doc__ if sc.__doc__ else "..."
+                    self.output(f"{sc.name} {desc}")
         return False
-
-
-class UiCommands(Command):
-    """commands for user interface"""
-
-    def __init__(self, output, sub_commands) -> None:
-        super().__init__("ui", output, sub_commands)
 
 
 class ColorCommand(Command):
@@ -158,7 +152,6 @@ class ToggleOutputCommand(Command):
 
 
 class MachineCommand(Command):
-    """machine commands"""
 
     def __init__(self, output, engine) -> None:
         sub_commands = [MachineOptionsCommand(output, engine)] + [
@@ -169,7 +162,6 @@ class MachineCommand(Command):
 
 
 class SystemCommand(Command):
-    """system commands"""
 
     def __init__(self, output, engine) -> None:
         sub_commands = [
@@ -180,6 +172,7 @@ class SystemCommand(Command):
 
 
 class SystemSetterCommand(Command):
+
     def __init__(self, system_name, output, engine) -> None:
         self.engine = engine
         self.__doc__ = f"sets system to {system_name}"
@@ -192,7 +185,6 @@ class SystemSetterCommand(Command):
 
 
 class MachineOptionsCommand(Command):
-    """configure current machine options"""
 
     def __init__(self, output, engine) -> None:
         self.engine = engine
@@ -214,13 +206,14 @@ class MachineOptionsCommand(Command):
 
 
 class MachineOptionSetterCommand(Command):
+
     def __init__(self, output, machine_name, name, default, engine) -> None:
         super().__init__(name, output)
         self.engine = engine
         self.default = default[0]
         self.t = type(self.default) or default[1]
         current = self.engine.config["machine_specific_options"][name]
-        self.__doc__ = f"type: {self.t} default: {self.default} current: {str(current)}"
+        self.__doc__ = f"default: {self.default} current: {str(current)}"
 
     def handle(self, words=[]):
         options = self.engine.config["machine_specific_options"]
@@ -232,6 +225,8 @@ class MachineOptionSetterCommand(Command):
         elif self.t is float:
             change_to = float("".join(words))
         else:
+            # TODO port ends up here somehow
+            # I'm sure this was working!?
             self.output(f"Unsupported type {self.t}, doing nothing...")
             return True
 
@@ -247,6 +242,7 @@ class MachineOptionSetterCommand(Command):
 
 
 class MachineSetterCommand(Command):
+
     def __init__(self, machine_name, output, engine) -> None:
         self.engine = engine
         self.__doc__ = f"set to {machine_name}"
@@ -258,24 +254,7 @@ class MachineSetterCommand(Command):
         return False
 
 
-# TODO implement config in a somewhat generic manner
-# class ConfigCommand(Command):
-#     def __init__(self, config, sub_commands) -> None:
-#         self.config = config
-#         super().__init__("configure", sub_commands)
-
-# def handle(self, output, words):
-#    pass
-# for o in self.config._config:
-#     output(o)
-# self.config._config.add_section("Console UI")
-# self.config._config.set("Console UI", "fg", "green")
-# section = " ".join(words)
-# if section in self.config._config:
-#     output(self.config._config.options(section))
-
 class ConfigureCommand(Command):
-    """configuration commands"""
 
     def __init__(self, output, engine) -> None:
         self.engine = engine
@@ -290,22 +269,62 @@ class ConfigureCommand(Command):
             "system_name",
             "show_stroke_display",
             "show_suggestions_display",
-            # we have no control over this
+            # we have no control over these
             "translation_frame_opacity",
             "start_minimized",
             # live in the future, fix it if there are complaints
             "classic_dictionaries_display_order",
             # ignore this forever
             "system_keymap",
-            # TODO need to read 'extension' plugins for this
+            # handled seperately
             "enabled_extensions"
         ]
-        return [
+        options = [
             ConfigureOptionCommand(self.output, self.engine, option)
             for option in
             self.engine.config.items()
             if option[0] not in ignore_here
         ]
+
+        options.append(
+            ConfigureEnabledExtensionsCommand(self.output, self.engine)
+        )
+        return options
+
+
+class ConfigureEnabledExtensionsCommand(Command):
+
+    def __init__(self, output, engine):
+        sub_commands = [
+            EnableDisableExtensionCommand(p.name, output, engine)
+            for p in registry.list_plugins("extension")
+        ]
+        super().__init__("extensions", output, sub_commands)
+
+
+class EnableDisableExtensionCommand(Command):
+    def __init__(self, extension_name, output, engine):
+        super().__init__(extension_name, output)
+        self.engine = engine
+
+        if self.name in self.engine.config["enabled_extensions"]:
+            self.__doc__ = "enabled"
+        else:
+            self.__doc__ = "disabled"
+
+
+    def handle(self, words=[]):
+        enabled: set = self.engine.config["enabled_extensions"]
+
+        if self.name in enabled:
+            self.output(f"Disabling extension {self.name}")
+            enabled.remove(self.name)
+        else:
+            self.output(f"Enabling extension {self.name}")
+            enabled.add(self.name)
+        self.output(enabled)
+        self.engine.config["enabled_extensions"] = enabled
+        return True
 
 
 class ConfigureOptionCommand(Command):
@@ -352,7 +371,8 @@ def build_commands(engine, layout):
             LookupCommand(output, engine),
             ResetMachineCommand(output, engine.reset_machine),
             ToggleOutputCommand(output, engine),
-            UiCommands(
+            Command(
+                "ui",
                 output,
                 [
                     ToggleTapeCommand(output, layout.toggle_tape, engine),

@@ -13,8 +13,6 @@ from .notification import ConsoleNotificationHandler
 from .presentation import layout, application, style_colored
 from .config import getvalue
 
-# TODO finish machine options
-# TODO finish rest of config
 # TODO dictionary pane
 # TODO dictionary enable/disable
 # TODO add/remove dictionaries
@@ -44,6 +42,8 @@ def config_saver(config: Config, output, update):
     if hasattr(config, "target_file"):
         with open(config.target_file, "wb") as f:
             config.save(f)
+    if hasattr(config, "path"):
+        config.save()
 
 
 def main(config: Config):

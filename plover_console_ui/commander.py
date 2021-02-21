@@ -19,9 +19,11 @@ class HelpCommand(Command):
         handler = self.commander.current_handler()
         if handler.sub_commands():
             for sc in handler.sub_commands():
-                self.output(f"{sc.name} - {sc.__doc__}")
+                desc = sc.__doc__ if sc.__doc__ else "..."
+                self.output(f"{sc.name} {desc}")
         else:
-            self.output(f"{handler.name} - {handler.__doc__}")
+            desc = handler.__doc__ if handler.__doc__ else "..."
+            self.output(f"{handler.name} {desc}")
         return True
 
 
