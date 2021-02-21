@@ -1,6 +1,3 @@
-from abc import ABCMeta
-from functools import partial
-
 from prompt_toolkit.application import get_app
 
 from plover.translation import unescape_translation
@@ -211,12 +208,12 @@ class MachineOptionSetterCommand(Command):
         super().__init__(name, output)
         self.engine = engine
         self.default = default[0]
-        self.t = type(self.default) or default[1]
+        self.t = type(self.default) if self.default else default[1]
         current = self.engine.config["machine_specific_options"][name]
         self.__doc__ = f"default: {self.default} current: {str(current)}"
 
     def handle(self, words=[]):
-        options = self.engine.config["machine_specific_options"]
+        options = self.engine.config["machine_specific_options"].copy()
 
         if self.t is str:
             change_to = " ".join(words)
@@ -225,15 +222,13 @@ class MachineOptionSetterCommand(Command):
         elif self.t is float:
             change_to = float("".join(words))
         else:
-            # TODO port ends up here somehow
-            # I'm sure this was working!?
             self.output(f"Unsupported type {self.t}, doing nothing...")
             return True
 
         self.output(f"setting {self.name} to {str(change_to)}")
         options[self.name] = change_to
 
-        self.engine.config["machine_specific_options"] = options
+        self.engine.config = {"machine_specific_options":  options}
 
 
         # this at least should throw errors if something is wrong
@@ -251,7 +246,7 @@ class MachineSetterCommand(Command):
     def handle(self, words=[]):
         self.output(f"Setting machine to {self.name}")
         self.engine.config = {"machine_type": self.name}
-        return False
+        return True
 
 
 class ConfigureCommand(Command):
@@ -312,9 +307,8 @@ class EnableDisableExtensionCommand(Command):
         else:
             self.__doc__ = "disabled"
 
-
     def handle(self, words=[]):
-        enabled: set = self.engine.config["enabled_extensions"]
+        enabled: set = self.engine.config["enabled_extensions"].copy()
 
         if self.name in enabled:
             self.output(f"Disabling extension {self.name}")
@@ -322,8 +316,7 @@ class EnableDisableExtensionCommand(Command):
         else:
             self.output(f"Enabling extension {self.name}")
             enabled.add(self.name)
-        self.output(enabled)
-        self.engine.config["enabled_extensions"] = enabled
+        self.engine.config = {"enabled_extensions": enabled}
         return True
 
 
@@ -351,7 +344,7 @@ class ConfigureOptionCommand(Command):
             self.output(f"Setting {self.name} to {change_to}")
             self.engine.config = {self.name: change_to}
         else:
-            self.output(f"Uhh, type {self.t} not supported currently")
+            self.output(f"Type {self.t} not supported currently")
         return True
 
 
