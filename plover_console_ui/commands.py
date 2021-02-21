@@ -8,7 +8,7 @@ from .presentation import style_colored
 from .config import setvalue
 
 
-class Command(metaclass=ABCMeta):
+class Command():
     def __init__(self, name, output, sub_commands=[]) -> None:
         self.name = name
         self.output = output

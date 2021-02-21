@@ -34,16 +34,12 @@ def show_error(title, message):
 
 
 def config_saver(config: Config, output, update):
-    # TODO once I've finished config, remove this logging
-    # or at least trim it a bit
-    output(f"Saving config: {update}")
+    output(f"Saving config: {' '.join(update.keys())}")
     # only necessary if version of plover is older than the config fixes
     # probably will remove this after 4.0.0 released
     if hasattr(config, "target_file"):
         with open(config.target_file, "wb") as f:
             config.save(f)
-    if hasattr(config, "path"):
-        config.save()
 
 
 def main(config: Config):
@@ -74,6 +70,8 @@ def main(config: Config):
     if engine.config["show_suggestions_display"]:
         layout.toggle_suggestions()
 
+    # TODO definitely get rid of this garbage
+    # throw stuff on the Config._OPTIONS I think
     fg = getvalue(engine._config, "fg")
 
     if fg:
