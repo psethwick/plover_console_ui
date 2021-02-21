@@ -58,7 +58,7 @@ class ColorCommand(Command):
             # TODO would be cool to allow any style here
             # not too hard to implement
             get_app().style = style_colored(color)
-            # above line will throw if it's a bad color
+            # above line will throw if prompt_toolkit hates it
             # it's ok to set it in config now
             setvalue(self.config, "fg", color)
             return True
@@ -161,7 +161,7 @@ class MachineCommand(Command):
     """machine commands"""
 
     def __init__(self, output, engine) -> None:
-        sub_commands = [
+        sub_commands = [MachineOptionsCommand(output, engine)] + [
             MachineSetterCommand(p.name, output, engine)
             for p in registry.list_plugins("machine")
         ]
@@ -192,43 +192,65 @@ class SystemSetterCommand(Command):
 
 
 class MachineOptionsCommand(Command):
-    """machine options"""
+    """configure current machine options"""
 
-    def __init__(self, output, machine_name, engine) -> None:
+    def __init__(self, output, engine) -> None:
         self.engine = engine
+        super().__init__("options", output)
+
+    def sub_commands(self):
+        machine_name = self.engine.config["machine_type"]
         machine_class = registry.get_plugin("machine", machine_name).obj
-        sub_commands = [
-            MachineOptionSetterCommand(output, machine_name, config_option, engine)
-            for config_option in machine_class.get_option_info()
+        return [
+            MachineOptionSetterCommand(
+                self.output,
+                machine_name,
+                name,
+                default,
+                self.engine
+            )
+            for name, default in machine_class.get_option_info().items()
         ]
-        super().__init__("options", output, sub_commands)
 
 
-# TODO resurrect this if I think it could be better than generic approach
 class MachineOptionSetterCommand(Command):
-    def __init__(self, output, machine_name, config_option, engine) -> None:
-        pass
-        # TODO implement the setter
-        # TODO show a) default b) current value
-        # TODO probably borrow the 'scan' thingy
-        # TODO this sucks
-#j        self.__doc__ = f"setting: {config_option.name} - default: {config_option.default}"
- #j       self.getter = partial(config_option.getter, engine.config, config_option.name)
-  #j      self.setter = partial(config_option.setter, engine.config, config_option.name)
+    def __init__(self, output, machine_name, name, default, engine) -> None:
+        super().__init__(name, output)
+        self.engine = engine
+        self.default = default[0]
+        self.t = type(self.default) or default[1]
+        current = self.engine.config["machine_specific_options"][name]
+        self.__doc__ = f"type: {self.t} default: {self.default} current: {str(current)}"
 
     def handle(self, words=[]):
-   #j     self.output("current: " + self.getter())
-    #j    self.setter("".join(words))
+        options = self.engine.config["machine_specific_options"]
+
+        if self.t is str:
+            change_to = " ".join(words)
+        elif self.t is int:
+            change_to = int("".join(words))
+        elif self.t is float:
+            change_to = float("".join(words))
+        else:
+            self.output(f"Unsupported type {self.t}, doing nothing...")
+            return True
+
+        self.output(f"setting {self.name} to {str(change_to)}")
+        options[self.name] = change_to
+
+        self.engine.config["machine_specific_options"] = options
+
+
+        # this at least should throw errors if something is wrong
+        self.engine.reset_machine()
         return True
 
 
 class MachineSetterCommand(Command):
     def __init__(self, machine_name, output, engine) -> None:
         self.engine = engine
-        self.__doc__ = f"sets machine to {machine_name}"
-        super().__init__(
-            machine_name, output, [MachineOptionsCommand(output, machine_name, engine)]
-        )
+        self.__doc__ = f"set to {machine_name}"
+        super().__init__(machine_name, output)
 
     def handle(self, words=[]):
         self.output(f"Setting machine to {self.name}")
