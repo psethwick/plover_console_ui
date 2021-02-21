@@ -17,8 +17,8 @@ class HelpCommand(Command):
 
     def handle(self, words=None):
         handler = self.commander.current_handler()
-        if handler.sub_commands:
-            for sc in handler.sub_commands:
+        if handler.sub_commands():
+            for sc in handler.sub_commands():
                 self.output(f"{sc.name} - {sc.__doc__}")
         else:
             self.output(f"{handler.name} - {handler.__doc__}")
@@ -60,10 +60,10 @@ class Commander:
         while not done:
             handler = next(
                 h
-                for h in handler.sub_commands
+                for h in handler.sub_commands()
                 if h.name.lower() == handler_name.lower()
             )
-            if not handler.sub_commands or not state:
+            if not handler.sub_commands() or not state:
                 done = True
             else:
                 handler_name = state.pop(0)
@@ -74,7 +74,7 @@ class Commander:
             if self.state:
                 if self.on_exit_state:
                     self.on_exit_state()
-                self.state.clear()
+                self.state.pop()
             return
 
         if self.handled_meta_command(words):
@@ -87,7 +87,7 @@ class Commander:
         done = False
         while possible_command and not done:
             found_command = False
-            for c in handler.sub_commands:
+            for c in handler.sub_commands():
                 if c.name.lower().startswith(possible_command.lower()):
                     found_command = True
                     local_state.append(c.name)

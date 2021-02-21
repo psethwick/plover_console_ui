@@ -52,6 +52,9 @@ class ConsoleLayout:
             title="Console",
             style="class:normal",
         )
+        # TODO separate tape/suggestion classes
+        self._all_keys = None
+        self._all_keys_filler = None
         self.tape = Frame(
             TextArea(focusable=False), title="Paper Tape", style="class:normal"
         )
@@ -68,9 +71,6 @@ class ConsoleLayout:
             ]
         )
 
-        # support paper tape
-        self._all_keys = None
-        self._all_keys_filler = None
 
     def __call__(self):
         return self.container
@@ -84,6 +84,7 @@ class ConsoleLayout:
                 for k in self._all_keys
             ]
             self._numbers = set(system.NUMBERS.values())
+            self.tape.container.width = len(self._all_keys) + 1
 
     # TODO attribute
     def output_to_tape(self, stroke):

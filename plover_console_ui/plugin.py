@@ -11,7 +11,7 @@ from plover.log import __logger
 from .console_engine import ConsoleEngine
 from .notification import ConsoleNotificationHandler
 from .presentation import layout, application, style_colored
-from .config import get
+from .config import getvalue
 
 # TODO finish machine options
 # TODO finish rest of config
@@ -74,7 +74,7 @@ def main(config: Config):
     if engine.config["show_suggestions_display"]:
         layout.toggle_suggestions()
 
-    fg = get(engine._config, "fg")
+    fg = getvalue(engine._config, "fg")
 
     if fg:
         application.style = style_colored(fg)

@@ -8,29 +8,32 @@ from plover.registry import registry
 
 from .suggestions import format_suggestions
 from .presentation import style_colored
-from .config import set
+from .config import setvalue
 
 
 class Command(metaclass=ABCMeta):
     def __init__(self, name, output, sub_commands=[]) -> None:
         self.name = name
         self.output = output
-        self.sub_commands = sub_commands
+        self._sub_commands = sub_commands
 
     def on_enter(self):
         # TODO do I even need this
         pass
 
-    def handle(self, words=None):
-        if self.name:
-            self.output(self.name.capitalize())
-            self.output("".join(["-" for _ in self.name]))
+    def sub_commands(self):
+        return self._sub_commands
+
+    def handle(self, words=[]):
+        section = self.name if self.name else "console"
+        self.output(section.capitalize())
+        self.output("".join(["-" for _ in section]))
         if words:
             self.output("Unsupported command: " + " ".join(words))
 
         else:
-            if self.sub_commands:
-                for sc in self.sub_commands:
+            if self.sub_commands():
+                for sc in self.sub_commands():
                     self.output(f"{sc.name} - {sc.__doc__}")
         return False
 
@@ -49,13 +52,15 @@ class ColorCommand(Command):
         self.config = config
         super().__init__("color", output)
 
-    def handle(self, words=None):
+    def handle(self, words=[]):
         if words:
             color = words[0]
+            # TODO would be cool to allow any style here
+            # not too hard to implement
             get_app().style = style_colored(color)
             # above line will throw if it's a bad color
             # it's ok to set it in config now
-            set(self.config, "fg", color)
+            setvalue(self.config, "fg", color)
             return True
         return False
 
@@ -66,7 +71,7 @@ class ExitCommand(Command):
     def __init__(self, output):
         super().__init__("exit", output)
 
-    def handle(self, words=None):
+    def handle(self, words=[]):
         get_app().exit(0)
         return True
 
@@ -99,7 +104,7 @@ class ToggleTapeCommand(Command):
         self.engine = engine
         super().__init__("tape", output)
 
-    def handle(self, words=None):
+    def handle(self, words=[]):
         show = self.toggler()
         self.engine.config = {"show_stroke_display": show}
         self.output(f"Show tape: {show}")
@@ -114,7 +119,7 @@ class ToggleSuggestionsCommand(Command):
         self.engine = engine
         super().__init__("suggestions", output)
 
-    def handle(self, words=None):
+    def handle(self, words=[]):
         show = self.toggler()
         self.engine.config = {"show_suggestions_display": show}
         self.output(f"Show suggestions: {show}")
@@ -128,7 +133,7 @@ class ResetMachineCommand(Command):
         self.resetter = resetter
         super().__init__("reset", output)
 
-    def handle(self, words=None):
+    def handle(self, words=[]):
         self.output("Resetting machine...")
         self.resetter()
         return True
@@ -141,7 +146,7 @@ class ToggleOutputCommand(Command):
         self.engine = engine
         super().__init__("output", output)
 
-    def handle(self, words=None):
+    def handle(self, words=[]):
         if self.engine.output:
             self.engine.output = False
         else:
@@ -180,7 +185,7 @@ class SystemSetterCommand(Command):
         self.__doc__ = f"sets system to {system_name}"
         super().__init__(system_name, output)
 
-    def handle(self, words=None):
+    def handle(self, words=[]):
         self.output(f"Setting system to {self.name}")
         self.engine.config = {"system_name": self.name}
         return True
@@ -199,19 +204,21 @@ class MachineOptionsCommand(Command):
         super().__init__("options", output, sub_commands)
 
 
+# TODO resurrect this if I think it could be better than generic approach
 class MachineOptionSetterCommand(Command):
     def __init__(self, output, machine_name, config_option, engine) -> None:
+        pass
         # TODO implement the setter
         # TODO show a) default b) current value
         # TODO probably borrow the 'scan' thingy
         # TODO this sucks
-        self.__doc__ = f"setting: {config_option.name} - default: {config_option.default}"
-        self.getter = partial(config_option.getter, engine.config, config_option.name)
-        self.setter = partial(config_option.setter, engine.config, config_option.name)
+#j        self.__doc__ = f"setting: {config_option.name} - default: {config_option.default}"
+ #j       self.getter = partial(config_option.getter, engine.config, config_option.name)
+  #j      self.setter = partial(config_option.setter, engine.config, config_option.name)
 
-    def handle(self, words=None):
-        self.output("current: " + self.getter())
-        self.setter("".join(words))
+    def handle(self, words=[]):
+   #j     self.output("current: " + self.getter())
+    #j    self.setter("".join(words))
         return True
 
 
@@ -223,7 +230,7 @@ class MachineSetterCommand(Command):
             machine_name, output, [MachineOptionsCommand(output, machine_name, engine)]
         )
 
-    def handle(self, words=None):
+    def handle(self, words=[]):
         self.output(f"Setting machine to {self.name}")
         self.engine.config = {"machine_type": self.name}
         return False
@@ -245,13 +252,66 @@ class MachineSetterCommand(Command):
 # if section in self.config._config:
 #     output(self.config._config.options(section))
 
-
 class ConfigureCommand(Command):
     """configuration commands"""
 
-    def __init__(self, output, sub_commands, engine) -> None:
+    def __init__(self, output, engine) -> None:
         self.engine = engine
-        super().__init__("configure", output, sub_commands)
+        super().__init__("configure", output)
+
+    def sub_commands(self):
+        ignore_here = [
+            # handled elsewhere
+            "dictionaries",  # TODO separate command
+            "machine_type",
+            "machine_specific_options",
+            "system_name",
+            "show_stroke_display",
+            "show_suggestions_display",
+            # we have no control over this
+            "translation_frame_opacity",
+            "start_minimized",
+            # live in the future, fix it if there are complaints
+            "classic_dictionaries_display_order",
+            # ignore this forever
+            "system_keymap",
+            # TODO need to read 'extension' plugins for this
+            "enabled_extensions"
+        ]
+        return [
+            ConfigureOptionCommand(self.output, self.engine, option)
+            for option in
+            self.engine.config.items()
+            if option[0] not in ignore_here
+        ]
+
+
+class ConfigureOptionCommand(Command):
+    def __init__(self, output, engine, option):
+        key, value = option
+        self.engine = engine
+        self.t = type(value)
+
+        self.__doc__ = str(value)
+
+        super().__init__(key, output)
+
+    def handle(self, words=[]):
+        if self.t is bool:
+            change_to = not self.engine.config[self.name]
+            self.output(f"Setting {self.name} to {change_to}")
+            self.engine.config = {self.name: change_to}
+        elif self.t is str:
+            change_to = " ".join(words)
+            self.output(f"Setting {self.name} to {change_to}")
+            self.engine.config = {self.name: change_to}
+        elif self.t is int:
+            change_to = int("".join(words))
+            self.output(f"Setting {self.name} to {change_to}")
+            self.engine.config = {self.name: change_to}
+        else:
+            self.output(f"Uhh, type {self.t} not supported currently")
+        return True
 
 
 def build_commands(engine, layout):
@@ -260,18 +320,10 @@ def build_commands(engine, layout):
         name=None,
         output=output,
         sub_commands=[
+            MachineCommand(output, engine),
+            SystemCommand(output, engine),
             ConfigureCommand(
                 output,
-                [
-                    MachineCommand(
-                        output,
-                        engine,
-                    ),
-                    SystemCommand(
-                        output,
-                        engine
-                    )
-                ],
                 engine,
             ),
             # dictionary?
