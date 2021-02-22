@@ -69,7 +69,7 @@ class Commander:
             if self.state:
                 if self.on_exit_state:
                     self.on_exit_state()
-                    self.on_exit = None
+                    self.on_exit_state = None
                 self.state.pop()
             return
 
