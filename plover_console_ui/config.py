@@ -4,6 +4,8 @@ CONSOLE_SECTION = "Console UI"
 
 
 def dummy_validate(config, key, value):
+    # we always set these on the application first
+    # it throws if it's bad so here... just let it go
     return value
 
 

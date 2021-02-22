@@ -34,16 +34,6 @@ class Command:
                 self.output(f"{sc.name}: {desc}")
 
 
-class ColorsCommand(Command):
-    def __init__(self, output, engine) -> None:
-        self.engine = engine
-        sub_commands = [
-            ForegroundColorCommand(output, engine),
-            BackgroundColorCommand(output, engine),
-        ]
-        super().__init__("colors", output, sub_commands)
-
-
 class BackgroundColorCommand(Command):
     """set background color (web-name or hex)"""
 
@@ -52,13 +42,14 @@ class BackgroundColorCommand(Command):
         super().__init__("background", output)
 
     def handle(self, words=[]):
+        background = None
         if words:
-            color = words[0]
-            fg = self.engine.config["console_ui_fg"]
-            get_app().style = create_style(fg, color)
-            self.engine.config = {"console_ui_bg": color}
-            return True
-        return False
+            background = words[0]
+
+        fg = self.engine.config["console_ui_fg"]
+        get_app().style = create_style(fg, background)
+        self.engine.config = {"console_ui_bg": background}
+        return True
 
 
 class ForegroundColorCommand(Command):
@@ -69,13 +60,14 @@ class ForegroundColorCommand(Command):
         super().__init__("foreground", output)
 
     def handle(self, words=[]):
+        foreground = None
         if words:
-            color = words[0]
-            bg = self.engine.config["console_ui_bg"]
-            get_app().style = create_style(color, bg)
-            self.engine.config = {"console_ui_fg": color}
-            return True
-        return False
+            foreground = words[0]
+        bg = self.engine.config["console_ui_bg"]
+        get_app().style = create_style(foreground, bg)
+
+        self.engine.config = {"console_ui_fg": foreground}
+        return True
 
 
 class ExitCommand(Command):
@@ -362,21 +354,19 @@ def build_commands(engine, layout):
         sub_commands=[
             MachineCommand(output, engine),
             SystemCommand(output, engine),
-            ConfigureCommand(
-                output,
-                engine,
-            ),
+            ConfigureCommand(output, engine),
             # dictionary?
             LookupCommand(output, engine),
             ResetMachineCommand(output, engine.reset_machine),
             ToggleOutputCommand(output, engine),
+            ToggleTapeCommand(output, layout.toggle_tape, engine),
+            ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
             Command(
-                "ui",
+                "colors",
                 output,
                 [
-                    ToggleTapeCommand(output, layout.toggle_tape, engine),
-                    ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
-                    ColorsCommand(output, engine),
+                    ForegroundColorCommand(output, engine),
+                    BackgroundColorCommand(output, engine),
                 ],
             ),
             ExitCommand(output),
