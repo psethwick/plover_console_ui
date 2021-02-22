@@ -167,8 +167,7 @@ class ToggleOutput(Command):
 class Machine(Command):
     def __init__(self, output, engine) -> None:
         sub_commands = [MachineOptions(output, engine)] + [
-            SetMachine(p.name, output, engine)
-            for p in registry.list_plugins("machine")
+            SetMachine(p.name, output, engine) for p in registry.list_plugins("machine")
         ]
         super().__init__("machine", output, sub_commands)
 
@@ -176,8 +175,7 @@ class Machine(Command):
 class System(Command):
     def __init__(self, output, engine) -> None:
         sub_commands = [
-            SetSystem(p.name, output, engine)
-            for p in registry.list_plugins("system")
+            SetSystem(p.name, output, engine) for p in registry.list_plugins("system")
         ]
         super().__init__("system", output, sub_commands)
 
@@ -439,7 +437,17 @@ class RemoveDictionary(Command):
         return True
 
 
-# TODO re-order dictionaries
+class PrioritiseDictionary(Command):
+    def __init__(self, output, index, dictionary, engine) -> None:
+        self.engine = engine
+        self.index = index
+        self.dictionary = dictionary
+        super().__init__("prioritise", output)
+
+    def sub_commands(self):
+        # TODO re-order dictionaries
+        # max/min/higher/lower
+        return []
 
 
 def build_commands(engine, layout):
