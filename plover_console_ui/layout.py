@@ -1,12 +1,8 @@
 from functools import partial
 
-from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.application import Application
 from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer
 from prompt_toolkit.widgets import TextArea, Frame, Label
 from prompt_toolkit.application import get_app
-from prompt_toolkit.styles import Style
 
 from .focus import focus
 from .add_translation import AddTranslation
@@ -101,40 +97,4 @@ class ConsoleLayout:
         get_app().layout.focus(at.strokes_field)
 
 
-kb = KeyBindings()
-
-
-@kb.add("c-c")
-@kb.add("c-q")
-def _(event):
-    " Pressing Ctrl-Q or Ctrl-C will exit the user interface. "
-    event.app.exit(0)
-
-
-def style_colored(color=None) -> Style:
-    if color:
-        return Style.from_dict(
-            {
-                "status": f"fg:{color} reverse",
-                "normal": f"fg:{color}",
-            }
-        )
-    return Style.from_dict(
-        {
-            "status": "reverse",
-        }
-    )
-
-
-style = style_colored()
-
 layout = ConsoleLayout()
-
-application = Application(
-    layout=Layout(DynamicContainer(layout), focused_element=layout.input),
-    key_bindings=kb,
-    style=style,
-    mouse_support=False,
-    full_screen=True,
-    enable_page_navigation_bindings=False,
-)

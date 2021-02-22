@@ -7,7 +7,7 @@ from prompt_toolkit.layout.processors import BeforeInput
 
 from .commander import Commander
 from .commands import build_commands
-from .presentation import ConsoleLayout
+from .layout import ConsoleLayout
 
 
 def status_bar_text(engine) -> str:

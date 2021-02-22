@@ -4,7 +4,7 @@ from plover.translation import unescape_translation
 from plover.registry import registry
 
 from .suggestions import format_suggestions
-from .presentation import style_colored
+from .application import create_style
 from .config import setvalue
 
 
@@ -47,7 +47,7 @@ class ColorCommand(Command):
             color = words[0]
             # TODO would be cool to allow any style here
             # not too hard to implement
-            get_app().style = style_colored(color)
+            get_app().style = create_style(color)
             # above line will throw if prompt_toolkit hates it
             # it's ok to set it in config now
             setvalue(self.config, "fg", color)

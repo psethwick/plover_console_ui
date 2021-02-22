@@ -10,7 +10,8 @@ from plover.log import __logger
 
 from .console_engine import ConsoleEngine
 from .notification import ConsoleNotificationHandler
-from .presentation import layout, application, style_colored
+from .application import application, create_style
+from .layout import layout
 from .config import getvalue
 
 # TODO dictionary enable/disable
@@ -76,7 +77,7 @@ def main(config: Config):
     fg = getvalue(engine._config, "fg")
 
     if fg:
-        application.style = style_colored(fg)
+        application.style = create_style(fg)
 
     quitting = Event()
     engine.hook_connect("quit", quitting.set)
