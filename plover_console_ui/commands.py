@@ -2,6 +2,8 @@ from prompt_toolkit.application import get_app
 
 from plover.translation import unescape_translation
 from plover.registry import registry
+from plover.misc import normalize_path
+from plover.config import DictionaryConfig
 
 from .suggestions import format_suggestions
 from .application import create_style
@@ -35,7 +37,7 @@ class Command:
 
 
 class BackgroundColorCommand(Command):
-    """set background color (web-name or hex)"""
+    """<web-name or hex>"""
 
     def __init__(self, output, engine):
         self.engine = engine
@@ -53,7 +55,7 @@ class BackgroundColorCommand(Command):
 
 
 class ForegroundColorCommand(Command):
-    """set foreground color (web-name or hex)"""
+    """<web-name or hex>"""
 
     def __init__(self, output, engine):
         self.engine = engine
@@ -82,7 +84,7 @@ class ExitCommand(Command):
 
 
 class LookupCommand(Command):
-    """looks up words in current dictionaries"""
+    """<word(s)> looks up in current dictionaries"""
 
     def __init__(self, output, engine):
         self.engine = engine
@@ -215,7 +217,7 @@ class MachineOptionSetterCommand(Command):
         self.default = default[0]
         self.t = type(self.default) if self.default else default[1]
         current = self.engine.config["machine_specific_options"][name]
-        self.__doc__ = f"default: {self.default} current: {str(current)}"
+        self.__doc__ = f"current: {str(current)}"
 
     def handle(self, words=[]):
         options = self.engine.config["machine_specific_options"].copy()
@@ -360,29 +362,89 @@ class DictionariesCommand(Command):
         self.dicts = dicts
 
     def sub_commands(self):
-        return [
-            ToggleDictionaryCommand(
-                self.format_dictionary(i, d), self.output, self.dicts[d], self.engine
+        return [AddDictionaryCommand(self.output, self.engine)] + [
+            SelectDictionaryCommand(
+                self.format_dictionary(i, d), self.output, i, self.dicts[d], self.engine
             )
             for i, d in enumerate(self.dicts)
         ]
 
 
-class ToggleDictionaryCommand(Command):
-    def __init__(self, name, output, dictionary, engine) -> None:
-        self.__doc__ = "Enabled" if dictionary.enabled else "Disabled"
+class AddDictionaryCommand(Command):
+    """<path-to-dictionary>"""
+
+    def __init__(self, output, engine) -> None:
         self.engine = engine
-        self.dictionary = dictionary
-        super().__init__(name, output)
+        super().__init__("add", output)
 
     def handle(self, words=[]):
+        path = normalize_path(" ".join(words))
         dicts = self.engine.config["dictionaries"].copy()
-        for d in dicts:
-            if d.path == self.dictionary.path:
-                d.enabled = not self.dictionary.enabled
+
+        dicts.insert(0, DictionaryConfig(path))
 
         self.engine.config = {"dictionaries": dicts}
         return True
+
+
+class SelectDictionaryCommand(Command):
+    def __init__(self, name, output, index, dictionary, engine) -> None:
+        self.__doc__ = "Enabled" if dictionary.enabled else "Disabled"
+        self.engine = engine
+        self.index = index
+        self.dictionary = dictionary
+        super().__init__(name, output)
+
+    def sub_commands(self):
+        return [
+            ToggleDictionaryCommand(
+                self.output, self.index, self.dictionary, self.engine
+            ),
+            RemoveDictionaryCommand(
+                self.output, self.index, self.dictionary, self.engine
+            ),
+        ]
+
+
+class ToggleDictionaryCommand(Command):
+    def __init__(self, output, index, dictionary, engine) -> None:
+        self.engine = engine
+        self.index = index
+        self.dictionary = dictionary
+        to_state = "off" if self.dictionary.enabled else "on"
+        self.__doc__ = f"turns dictionary {to_state}"
+        super().__init__("toggle", output)
+
+    def handle(self, words=[]):
+        dicts = self.engine.config["dictionaries"].copy()
+
+        dicts[self.index] = dicts[self.index].replace(
+            enabled=not self.dictionary.enabled
+        )
+
+        self.engine.config = {"dictionaries": dicts}
+        return True
+
+
+class RemoveDictionaryCommand(Command):
+    """removes from list"""
+
+    def __init__(self, output, index, dictionary, engine) -> None:
+        self.engine = engine
+        self.index = index
+        self.dictionary = dictionary
+        super().__init__("remove", output)
+
+    def handle(self, words=[]):
+        dicts = self.engine.config["dictionaries"].copy()
+
+        dicts.remove(dicts[self.index])
+
+        self.engine.config = {"dictionaries": dicts}
+        return True
+
+
+# TODO re-order dictionaries
 
 
 def build_commands(engine, layout):
