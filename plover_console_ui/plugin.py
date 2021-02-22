@@ -17,12 +17,11 @@ from .config import console_ui_options
 # TODO readme
 # TODO gifs for readme
 # TODO publish pipeline + sanity checks
-# TODO work out why windows is broke and at least document
-# TODO minimise windows-launcher
+# TODO work out why windows is broke and at least document (pretty sure it's bdist only)
 # TODO test all features
 # post mvp
 # TODO completers? Buffer.completer
-# TODO dictionary pane
+# TODO dictionary pane?
 # TODO style log commands and/or more styles in general
 # TODO can I get better laid-out commands?
 

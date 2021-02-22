@@ -40,6 +40,7 @@ class ConsoleLayout:
         self.tape = Tape()
         self.suggestions = Suggestions()
 
+        # TODO make order always the same here
         self.outputs = [self.console]
 
         self.container = HSplit(
