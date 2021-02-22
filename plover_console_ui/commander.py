@@ -9,7 +9,7 @@ def peek(list):
     return None
 
 
-class HelpCommand(Command):
+class Help(Command):
     def __init__(self, commander) -> None:
         self.commander = commander
         super().__init__("help", commander.output)
@@ -21,7 +21,7 @@ class HelpCommand(Command):
 
 
 def build_meta_commands(commander):
-    return [HelpCommand(commander)]
+    return [Help(commander)]
 
 
 class Commander:

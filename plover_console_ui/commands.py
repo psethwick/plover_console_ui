@@ -36,7 +36,7 @@ class Command:
                 self.output(f"{sc.name}: {desc}")
 
 
-class BackgroundColorCommand(Command):
+class SetBackgroundColor(Command):
     """<web-name or hex>"""
 
     def __init__(self, output, engine):
@@ -54,7 +54,7 @@ class BackgroundColorCommand(Command):
         return True
 
 
-class ForegroundColorCommand(Command):
+class SetForegroundColor(Command):
     """<web-name or hex>"""
 
     def __init__(self, output, engine):
@@ -72,7 +72,7 @@ class ForegroundColorCommand(Command):
         return True
 
 
-class ExitCommand(Command):
+class Exit(Command):
     """exits plover"""
 
     def __init__(self, output):
@@ -83,7 +83,7 @@ class ExitCommand(Command):
         return True
 
 
-class LookupCommand(Command):
+class Lookup(Command):
     """<word(s)> looks up in current dictionaries"""
 
     def __init__(self, output, engine):
@@ -103,8 +103,8 @@ class LookupCommand(Command):
         return True
 
 
-class ToggleTapeCommand(Command):
-    """turns paper tape pane on/off"""
+class ToggleTape(Command):
+    """toggles tape"""
 
     def __init__(self, output, toggler, engine):
         self.toggler = toggler
@@ -118,8 +118,8 @@ class ToggleTapeCommand(Command):
         return True
 
 
-class ToggleSuggestionsCommand(Command):
-    """turns suggestions pane on/off"""
+class ToggleSuggestions(Command):
+    """toggles suggestions"""
 
     def __init__(self, output, toggler, engine):
         self.toggler = toggler
@@ -133,8 +133,8 @@ class ToggleSuggestionsCommand(Command):
         return True
 
 
-class ResetMachineCommand(Command):
-    """reconnects current machine"""
+class ResetMachine(Command):
+    """reconnects machine"""
 
     def __init__(self, output, resetter):
         self.resetter = resetter
@@ -146,8 +146,8 @@ class ResetMachineCommand(Command):
         return True
 
 
-class ToggleOutputCommand(Command):
-    """toggles plover output on/off"""
+class ToggleOutput(Command):
+    """enables/disables output"""
 
     def __init__(self, output, engine):
         self.engine = engine
@@ -164,28 +164,28 @@ class ToggleOutputCommand(Command):
         return True
 
 
-class MachineCommand(Command):
+class Machine(Command):
     def __init__(self, output, engine) -> None:
-        sub_commands = [MachineOptionsCommand(output, engine)] + [
-            MachineSetterCommand(p.name, output, engine)
+        sub_commands = [MachineOptions(output, engine)] + [
+            SetMachine(p.name, output, engine)
             for p in registry.list_plugins("machine")
         ]
         super().__init__("machine", output, sub_commands)
 
 
-class SystemCommand(Command):
+class System(Command):
     def __init__(self, output, engine) -> None:
         sub_commands = [
-            SystemSetterCommand(p.name, output, engine)
+            SetSystem(p.name, output, engine)
             for p in registry.list_plugins("system")
         ]
         super().__init__("system", output, sub_commands)
 
 
-class SystemSetterCommand(Command):
+class SetSystem(Command):
     def __init__(self, system_name, output, engine) -> None:
         self.engine = engine
-        self.__doc__ = f"sets system to {system_name}"
+        self.__doc__ = f"sets to {system_name}"
         super().__init__(system_name, output)
 
     def handle(self, words=[]):
@@ -194,7 +194,7 @@ class SystemSetterCommand(Command):
         return True
 
 
-class MachineOptionsCommand(Command):
+class MachineOptions(Command):
     def __init__(self, output, engine) -> None:
         self.engine = engine
         super().__init__("options", output)
@@ -203,15 +203,13 @@ class MachineOptionsCommand(Command):
         machine_name = self.engine.config["machine_type"]
         machine_class = registry.get_plugin("machine", machine_name).obj
         return [
-            MachineOptionSetterCommand(
-                self.output, machine_name, name, default, self.engine
-            )
+            SetMachineOption(self.output, name, default, self.engine)
             for name, default in machine_class.get_option_info().items()
         ]
 
 
-class MachineOptionSetterCommand(Command):
-    def __init__(self, output, machine_name, name, default, engine) -> None:
+class SetMachineOption(Command):
+    def __init__(self, output, name, default, engine) -> None:
         super().__init__(name, output)
         self.engine = engine
         self.default = default[0]
@@ -238,11 +236,12 @@ class MachineOptionSetterCommand(Command):
         self.engine.config = {"machine_specific_options": options}
 
         # this at least should throw errors if something is wrong
+        # annoyingly plover seems to allow changing these to garbage
         self.engine.reset_machine()
         return True
 
 
-class MachineSetterCommand(Command):
+class SetMachine(Command):
     def __init__(self, machine_name, output, engine) -> None:
         self.engine = engine
         self.__doc__ = f"set to {machine_name}"
@@ -254,7 +253,7 @@ class MachineSetterCommand(Command):
         return True
 
 
-class ConfigureCommand(Command):
+class Configure(Command):
     def __init__(self, output, engine) -> None:
         self.engine = engine
         super().__init__("configure", output)
@@ -279,25 +278,25 @@ class ConfigureCommand(Command):
             "enabled_extensions",
         ]
         options = [
-            ConfigureOptionCommand(self.output, self.engine, option)
+            ConfigureOption(self.output, self.engine, option)
             for option in self.engine.config.items()
             if option[0] not in ignore_here
         ]
 
-        options.append(ConfigureEnabledExtensionsCommand(self.output, self.engine))
+        options.append(ConfigureEnabledExtensions(self.output, self.engine))
         return options
 
 
-class ConfigureEnabledExtensionsCommand(Command):
+class ConfigureEnabledExtensions(Command):
     def __init__(self, output, engine):
         sub_commands = [
-            EnableDisableExtensionCommand(p.name, output, engine)
+            EnableDisableExtension(p.name, output, engine)
             for p in registry.list_plugins("extension")
         ]
         super().__init__("extensions", output, sub_commands)
 
 
-class EnableDisableExtensionCommand(Command):
+class EnableDisableExtension(Command):
     def __init__(self, extension_name, output, engine):
         super().__init__(extension_name, output)
         self.engine = engine
@@ -320,7 +319,7 @@ class EnableDisableExtensionCommand(Command):
         return True
 
 
-class ConfigureOptionCommand(Command):
+class ConfigureOption(Command):
     def __init__(self, output, engine, option):
         key, value = option
         self.engine = engine
@@ -348,7 +347,7 @@ class ConfigureOptionCommand(Command):
         return True
 
 
-class DictionariesCommand(Command):
+class Dictionaries(Command):
     def __init__(self, output, engine) -> None:
         engine.hook_connect("dictionaries_loaded", self.on_dictionaries_loaded)
         self.engine = engine
@@ -362,15 +361,15 @@ class DictionariesCommand(Command):
         self.dicts = dicts
 
     def sub_commands(self):
-        return [AddDictionaryCommand(self.output, self.engine)] + [
-            SelectDictionaryCommand(
+        return [AddDictionary(self.output, self.engine)] + [
+            SelectDictionary(
                 self.format_dictionary(i, d), self.output, i, self.dicts[d], self.engine
             )
             for i, d in enumerate(self.dicts)
         ]
 
 
-class AddDictionaryCommand(Command):
+class AddDictionary(Command):
     """<path-to-dictionary>"""
 
     def __init__(self, output, engine) -> None:
@@ -387,7 +386,7 @@ class AddDictionaryCommand(Command):
         return True
 
 
-class SelectDictionaryCommand(Command):
+class SelectDictionary(Command):
     def __init__(self, name, output, index, dictionary, engine) -> None:
         self.__doc__ = "Enabled" if dictionary.enabled else "Disabled"
         self.engine = engine
@@ -397,16 +396,12 @@ class SelectDictionaryCommand(Command):
 
     def sub_commands(self):
         return [
-            ToggleDictionaryCommand(
-                self.output, self.index, self.dictionary, self.engine
-            ),
-            RemoveDictionaryCommand(
-                self.output, self.index, self.dictionary, self.engine
-            ),
+            ToggleDictionary(self.output, self.index, self.dictionary, self.engine),
+            RemoveDictionary(self.output, self.index, self.dictionary, self.engine),
         ]
 
 
-class ToggleDictionaryCommand(Command):
+class ToggleDictionary(Command):
     def __init__(self, output, index, dictionary, engine) -> None:
         self.engine = engine
         self.index = index
@@ -426,7 +421,7 @@ class ToggleDictionaryCommand(Command):
         return True
 
 
-class RemoveDictionaryCommand(Command):
+class RemoveDictionary(Command):
     """removes from list"""
 
     def __init__(self, output, index, dictionary, engine) -> None:
@@ -453,23 +448,23 @@ def build_commands(engine, layout):
         name=None,
         output=output,
         sub_commands=[
-            LookupCommand(output, engine),
-            ResetMachineCommand(output, engine.reset_machine),
-            MachineCommand(output, engine),
-            SystemCommand(output, engine),
-            ConfigureCommand(output, engine),
-            DictionariesCommand(output, engine),
-            ToggleOutputCommand(output, engine),
-            ToggleTapeCommand(output, layout.toggle_tape, engine),
-            ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
+            Lookup(output, engine),
+            ResetMachine(output, engine.reset_machine),
+            Machine(output, engine),
+            System(output, engine),
+            Configure(output, engine),
+            Dictionaries(output, engine),
+            ToggleOutput(output, engine),
+            ToggleTape(output, layout.toggle_tape, engine),
+            ToggleSuggestions(output, layout.toggle_suggestions, engine),
             Command(
                 "colors",
                 output,
                 [
-                    ForegroundColorCommand(output, engine),
-                    BackgroundColorCommand(output, engine),
+                    SetForegroundColor(output, engine),
+                    SetBackgroundColor(output, engine),
                 ],
             ),
-            ExitCommand(output),
+            Exit(output),
         ],
     )
