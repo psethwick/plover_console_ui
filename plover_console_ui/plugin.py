@@ -1,9 +1,11 @@
 from functools import partial
 from threading import Event
 
+from prompt_toolkit.application import get_app
+
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover import log
-from plover.config import Config, plugin_option
+from plover.config import Config
 
 # this will never come back to bite me
 from plover.log import __logger
@@ -21,10 +23,11 @@ from .config import console_ui_options
 # TODO publish pipeline + sanity checks
 # TODO work out why windows is broke and at least document
 # TODO minimise windows-launcher
+# TODO test all features
 # post mvp
 # TODO completers? Buffer.completer
 # TODO dictionary pane
-# TODO style log commands
+# TODO style log commands and/or more styles in general
 # TODO can I get better laid-out commands?
 
 
@@ -36,7 +39,6 @@ def show_error(title, message):
 
 
 def config_saver(config: Config, output, update):
-    output(f"Saving config: {' '.join(update.keys())}")
     # only necessary if version of plover is older than the config fixes
     # probably will remove this after 4.0.0 released
     if hasattr(config, "target_file"):
@@ -75,15 +77,15 @@ def main(config: Config):
     if engine.config["show_stroke_display"]:
         layout.toggle_tape()
 
-    fg = engine.config["console_ui_fg"] if engine.config["console_ui_fg"] else None
+    fg = engine.config["console_ui_fg"]
+    bg = engine.config["console_ui_bg"]
 
-    if fg:
-        application.style = create_style(fg)
+    application.style = create_style(fg, bg)
 
     quitting = Event()
     engine.hook_connect("quit", quitting.set)
-    engine.start()
 
+    engine.start()
     code = application.run()
 
     engine.quit()

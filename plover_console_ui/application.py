@@ -17,19 +17,11 @@ def _(event):
     event.app.exit(0)
 
 
-def create_style(color=None) -> Style:
-    if color:
-        return Style.from_dict(
-            {
-                "status": f"fg:{color} reverse",
-                "normal": f"fg:{color}",
-            }
-        )
-    return Style.from_dict(
-        {
-            "status": "reverse",
-        }
-    )
+def create_style(fg=None, bg=None) -> Style:
+    fore = f"fg:{fg}" if fg else ""
+    back = f"bg:{bg}" if bg else ""
+    styles = " ".join([fore, back])
+    return Style.from_dict({"status": f"{styles} reverse", "normal": f"{styles}"})
 
 
 style = create_style()
