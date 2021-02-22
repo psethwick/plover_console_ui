@@ -8,7 +8,7 @@ from prompt_toolkit.widgets import TextArea, Frame, Label
 from prompt_toolkit.application import get_app
 from prompt_toolkit.styles import Style
 
-from .focus import Focus
+from .focus import focus
 from .add_translation import AddTranslation
 from .tape import Tape
 from .output import output_to_buffer, output_to_buffer_position
@@ -27,8 +27,7 @@ plover_text = """ _____  _
 
 
 class ConsoleLayout:
-    def __init__(self, focus) -> None:
-        self.focus = focus
+    def __init__(self) -> None:
         self.cmder_input = TextArea(
             height=1, multiline=False, wrap_lines=False, style="class:normal"
         )
@@ -76,16 +75,16 @@ class ConsoleLayout:
             return True
 
     def focus_console(self):
-        self.focus.set_prev()
-        self.focus.console()
+        focus.set_prev()
+        focus.console()
 
     def focus_toggle(self):
-        self.focus.toggle()
+        focus.toggle()
 
     def exit_modal(self):
         self.input = self.cmder_input
         get_app().layout.focus(self.cmder_input)
-        self.focus.prev()
+        focus.prev()
 
     def on_add_translation(self, engine):
         self.focus_console()
@@ -102,7 +101,6 @@ class ConsoleLayout:
         get_app().layout.focus(at.strokes_field)
 
 
-focus = Focus()
 kb = KeyBindings()
 
 
@@ -130,7 +128,7 @@ def style_colored(color=None) -> Style:
 
 style = style_colored()
 
-layout = ConsoleLayout(focus)
+layout = ConsoleLayout()
 
 application = Application(
     layout=Layout(DynamicContainer(layout), focused_element=layout.input),

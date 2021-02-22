@@ -1,12 +1,11 @@
-
 from plover.oslayer.wmctrl import SetForegroundWindow, GetForegroundWindow
 
 
-class Focus():
+class Focus:
     def __init__(self) -> None:
         self.console = GetForegroundWindow()
         self.prev = None
-    
+
     def reset_console(self) -> None:
         self.console = GetForegroundWindow()
 
@@ -23,6 +22,9 @@ class Focus():
 
     def prev(self):
         SetForegroundWindow(self.prev)
-    
+
     def console(self):
         SetForegroundWindow(self.console)
+
+
+focus = Focus()
