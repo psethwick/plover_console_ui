@@ -9,7 +9,6 @@ def peek(list):
     return None
 
 
-# TODO should this even exist
 class HelpCommand(Command):
     def __init__(self, commander) -> None:
         self.commander = commander
@@ -17,13 +16,7 @@ class HelpCommand(Command):
 
     def handle(self, words=None):
         handler = self.commander.current_handler()
-        if handler.sub_commands():
-            for sc in handler.sub_commands():
-                desc = sc.__doc__ if sc.__doc__ else "..."
-                self.output(f"{sc.name} {desc}")
-        else:
-            desc = handler.__doc__ if handler.__doc__ else "..."
-            self.output(f"{handler.name} {desc}")
+        handler.describe()
         return True
 
 

@@ -8,7 +8,7 @@ from .presentation import style_colored
 from .config import setvalue
 
 
-class Command():
+class Command:
     def __init__(self, name, output, sub_commands=[]) -> None:
         self.name = name
         self.output = output
@@ -16,24 +16,28 @@ class Command():
 
     def on_enter(self):
         # TODO do I even need this
+        # thinking face is getting bigger
         pass
 
     def sub_commands(self):
         return self._sub_commands
 
     def handle(self, words=[]):
+        if words:
+            self.output("Unsupported command: " + " ".join(words))
+        else:
+            self.describe()
+        return False
+
+    def describe(self):
         section = self.name if self.name else "console"
         self.output(section.capitalize())
         self.output("".join(["-" for _ in section]))
-        if words:
-            self.output("Unsupported command: " + " ".join(words))
 
-        else:
-            if self.sub_commands():
-                for sc in self.sub_commands():
-                    desc = sc.__doc__ if sc.__doc__ else "..."
-                    self.output(f"{sc.name} {desc}")
-        return False
+        if self.sub_commands():
+            for sc in self.sub_commands():
+                desc = sc.__doc__ if sc.__doc__ else "..."
+                self.output(f"{sc.name}: {desc}")
 
 
 class ColorCommand(Command):
@@ -149,7 +153,6 @@ class ToggleOutputCommand(Command):
 
 
 class MachineCommand(Command):
-
     def __init__(self, output, engine) -> None:
         sub_commands = [MachineOptionsCommand(output, engine)] + [
             MachineSetterCommand(p.name, output, engine)
@@ -159,7 +162,6 @@ class MachineCommand(Command):
 
 
 class SystemCommand(Command):
-
     def __init__(self, output, engine) -> None:
         sub_commands = [
             SystemSetterCommand(p.name, output, engine)
@@ -169,7 +171,6 @@ class SystemCommand(Command):
 
 
 class SystemSetterCommand(Command):
-
     def __init__(self, system_name, output, engine) -> None:
         self.engine = engine
         self.__doc__ = f"sets system to {system_name}"
@@ -182,7 +183,6 @@ class SystemSetterCommand(Command):
 
 
 class MachineOptionsCommand(Command):
-
     def __init__(self, output, engine) -> None:
         self.engine = engine
         super().__init__("options", output)
@@ -192,18 +192,13 @@ class MachineOptionsCommand(Command):
         machine_class = registry.get_plugin("machine", machine_name).obj
         return [
             MachineOptionSetterCommand(
-                self.output,
-                machine_name,
-                name,
-                default,
-                self.engine
+                self.output, machine_name, name, default, self.engine
             )
             for name, default in machine_class.get_option_info().items()
         ]
 
 
 class MachineOptionSetterCommand(Command):
-
     def __init__(self, output, machine_name, name, default, engine) -> None:
         super().__init__(name, output)
         self.engine = engine
@@ -228,8 +223,7 @@ class MachineOptionSetterCommand(Command):
         self.output(f"setting {self.name} to {str(change_to)}")
         options[self.name] = change_to
 
-        self.engine.config = {"machine_specific_options":  options}
-
+        self.engine.config = {"machine_specific_options": options}
 
         # this at least should throw errors if something is wrong
         self.engine.reset_machine()
@@ -237,7 +231,6 @@ class MachineOptionSetterCommand(Command):
 
 
 class MachineSetterCommand(Command):
-
     def __init__(self, machine_name, output, engine) -> None:
         self.engine = engine
         self.__doc__ = f"set to {machine_name}"
@@ -250,7 +243,6 @@ class MachineSetterCommand(Command):
 
 
 class ConfigureCommand(Command):
-
     def __init__(self, output, engine) -> None:
         self.engine = engine
         super().__init__("configure", output)
@@ -272,23 +264,19 @@ class ConfigureCommand(Command):
             # ignore this forever
             "system_keymap",
             # handled seperately
-            "enabled_extensions"
+            "enabled_extensions",
         ]
         options = [
             ConfigureOptionCommand(self.output, self.engine, option)
-            for option in
-            self.engine.config.items()
+            for option in self.engine.config.items()
             if option[0] not in ignore_here
         ]
 
-        options.append(
-            ConfigureEnabledExtensionsCommand(self.output, self.engine)
-        )
+        options.append(ConfigureEnabledExtensionsCommand(self.output, self.engine))
         return options
 
 
 class ConfigureEnabledExtensionsCommand(Command):
-
     def __init__(self, output, engine):
         sub_commands = [
             EnableDisableExtensionCommand(p.name, output, engine)

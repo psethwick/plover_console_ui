@@ -13,7 +13,6 @@ from .notification import ConsoleNotificationHandler
 from .presentation import layout, application, style_colored
 from .config import getvalue
 
-# TODO dictionary pane
 # TODO dictionary enable/disable
 # TODO add/remove dictionaries
 # TODO readme
@@ -24,6 +23,9 @@ from .config import getvalue
 # TODO minimise windows-launcher
 # post mvp
 # TODO completers? Buffer.completer
+# TODO dictionary pane
+# TODO style log commands
+# TODO can I get better laid-out commands?
 
 
 def show_error(title, message):
@@ -64,11 +66,11 @@ def main(config: Config):
         partial(config_saver, config, layout.output_to_console),
     )
 
-    if engine.config["show_stroke_display"]:
-        layout.toggle_tape()
-
     if engine.config["show_suggestions_display"]:
         layout.toggle_suggestions()
+
+    if engine.config["show_stroke_display"]:
+        layout.toggle_tape()
 
     # TODO definitely get rid of this garbage
     # throw stuff on the Config._OPTIONS I think

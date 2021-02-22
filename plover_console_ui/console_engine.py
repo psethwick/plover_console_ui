@@ -7,7 +7,6 @@ from prompt_toolkit.layout.processors import BeforeInput
 
 from .commander import Commander
 from .commands import build_commands
-from .suggestions import on_translated
 from .presentation import ConsoleLayout
 
 
@@ -20,6 +19,7 @@ def status_bar_text(engine) -> str:
         " |"
     )
 
+
 # TODO hook dictionaries_loaded
 
 
@@ -29,24 +29,31 @@ class ConsoleEngine(StenoEngine, Thread):
         Thread.__init__(self)
         self.name += "-engine"
         self.layout = layout
-        self.hook_connect("stroked", layout.output_to_tape)
         self.hook_connect("focus", layout.focus_toggle)
-        self.hook_connect("translated", self.on_translated)
+        self.hook_connect(
+            "translated",
+            partial(self.layout.suggestions.on_translated, self),
+        )
         self.hook_connect("add_translation", partial(layout.on_add_translation, self))
         self.cmder = Commander(build_commands(self, layout), layout.output_to_console)
 
         def on_lookup():
             layout.focus_console()
+            self.layout.cmder_input.text = ""
             self.cmder.set_state(["lookup"], layout.exit_modal)
 
         self.hook_connect("lookup", on_lookup)
 
         def on_configure():
             layout.focus_console()
+            self.layout.cmder_input.text = ""
             self.cmder.set_state(["configure"], layout.exit_modal)
 
         self.hook_connect("configure", on_configure)
-        self.hook_connect("config_changed", layout.on_config_changed)
+
+        # tape hooks
+        self.hook_connect("config_changed", layout.tape.on_config_changed)
+        self.hook_connect("stroked", layout.tape.on_stroked)
 
         def on_quit():
             self.cmder.set_state([])
@@ -73,6 +80,3 @@ class ConsoleEngine(StenoEngine, Thread):
     def join(self):
         Thread.join(self)
         return self.code
-
-    def on_translated(self, old, new):
-        on_translated(self, self.layout.output_to_suggestions, old, new)

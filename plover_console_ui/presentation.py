@@ -1,4 +1,3 @@
-from wcwidth import wcwidth
 from functools import partial
 
 from prompt_toolkit.layout.layout import Layout
@@ -6,25 +5,14 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import Application
 from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer
 from prompt_toolkit.widgets import TextArea, Frame, Label
-from prompt_toolkit.document import Document
 from prompt_toolkit.application import get_app
 from prompt_toolkit.styles import Style
 
 from .focus import Focus
-from .addtranslation import AddTranslation
-
-from plover import system
-
-def output_to_buffer(buffer, text):
-    o = f"{buffer.text}\n{text}"
-    buffer.document = Document(text=o, cursor_position=len(o))
-    get_app().invalidate()
-
-
-def output_to_buffer_position(buffer, position, text):
-    o = f"{buffer.text[:position]}\n{text}"
-    buffer.document = Document(text=o, cursor_position=len(o))
-    get_app().invalidate()
+from .add_translation import AddTranslation
+from .tape import Tape
+from .output import output_to_buffer, output_to_buffer_position
+from .suggestions import Suggestions
 
 
 # TODO maybe a slanted version of this?
@@ -35,8 +23,6 @@ plover_text = """ _____  _
 | |    | | (_) \ V /  __/ |
 |_|    |_|\___/ \_/ \___|_|
 
-Commands:
---------
 """
 
 
@@ -55,15 +41,10 @@ class ConsoleLayout:
             title="Console",
             style="class:normal",
         )
-        # TODO separate tape/suggestion classes
-        self._all_keys = None
-        self._all_keys_filler = None
-        self.tape = Frame(
-            TextArea(focusable=False), title="Paper Tape", style="class:normal"
-        )
-        self.suggestions = Frame(
-            TextArea(focusable=False), title="Suggestions", style="class:normal"
-        )
+
+        self.tape = Tape()
+        self.suggestions = Suggestions()
+
         self.outputs = [self.console]
 
         self.container = HSplit(
@@ -74,38 +55,11 @@ class ConsoleLayout:
             ]
         )
 
-
     def __call__(self):
         return self.container
 
-    # TODO attribute
-    def on_config_changed(self, update):
-        if 'system_name' in update:
-            self._all_keys = ''.join(key.strip('-') for key in system.KEYS)
-            self._all_keys_filler = [
-                ' ' * wcwidth(k)
-                for k in self._all_keys
-            ]
-            self._numbers = set(system.NUMBERS.values())
-            self.tape.container.width = len(self._all_keys) + 1
-
-    # TODO attribute
-    def output_to_tape(self, stroke):
-        text = self._all_keys_filler * 1
-        keys = stroke.steno_keys[:]
-        if any(key in self._numbers for key in keys):
-            keys.append('#')
-        for key in keys:
-            index = system.KEY_ORDER[key]
-            text[index] = self._all_keys[index]
-
-        output_to_buffer(self.tape.body.buffer, "".join(text))
-
     def output_to_console(self, text):
         output_to_buffer(self.console.body.buffer, text)
-
-    def output_to_suggestions(self, text):
-        output_to_buffer(self.suggestions.body.buffer, text)
 
     def toggle_tape(self):
         return self._toggle(self.tape)
@@ -166,7 +120,7 @@ def style_colored(color=None) -> Style:
                 "status": f"fg:{color} reverse",
                 "normal": f"fg:{color}",
             }
-    )
+        )
     return Style.from_dict(
         {
             "status": "reverse",
