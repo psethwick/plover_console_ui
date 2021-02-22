@@ -1,3 +1,6 @@
+# some of this code is derivative of code in plover core
+# for full source of that, visit: https://github.com/openstenoproject/plover
+
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import HSplit
@@ -9,7 +12,6 @@ from plover.translation import escape_translation
 from plover.formatting import RetroFormatter
 
 
-# TODO attribute
 def dictionary_filter(key, value):
     # Allow undo...
     if value == "=undo":

@@ -87,7 +87,6 @@ class Commander:
                     found_command = True
                     local_state.append(c.name)
                     handler = c
-                    c.on_enter()
                     _ = words.pop(0)
                     possible_command = peek(words)
                     break

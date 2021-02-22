@@ -17,7 +17,6 @@ from .config import getvalue
 # TODO add/remove dictionaries
 # TODO readme
 # TODO gifs for readme
-# TODO attribute bits borrowed from plover source
 # TODO publish pipeline + sanity checks
 # TODO work out why windows is broke and at least document
 # TODO minimise windows-launcher

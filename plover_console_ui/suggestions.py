@@ -1,3 +1,6 @@
+# some of this code is derivative of code in plover core
+# for full source of that, visit: https://github.com/openstenoproject/plover
+
 import re
 
 from plover.formatting import RetroFormatter
@@ -10,7 +13,6 @@ from prompt_toolkit.widgets import TextArea, Frame
 WORD_RX = re.compile(r"(?:\w+|[^\w\s]+)\s*")
 
 
-# TODO attribute
 def tails(ls):
     for i in range(len(ls)):
         yield ls[i:]

@@ -1,3 +1,6 @@
+# some of this code is derivative of code in plover core
+# for full source of that, visit: https://github.com/openstenoproject/plover
+
 from wcwidth import wcwidth
 
 from prompt_toolkit.widgets import TextArea, Frame
@@ -5,6 +8,7 @@ from prompt_toolkit.widgets import TextArea, Frame
 from plover import system
 
 from .output import output_to_buffer
+
 
 class Tape(Frame):
     def __init__(self) -> None:

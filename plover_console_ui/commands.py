@@ -14,11 +14,6 @@ class Command:
         self.output = output
         self._sub_commands = sub_commands
 
-    def on_enter(self):
-        # TODO do I even need this
-        # thinking face is getting bigger
-        pass
-
     def sub_commands(self):
         return self._sub_commands
 
