@@ -24,12 +24,9 @@ def create_style(fg=None, bg=None) -> Style:
     return Style.from_dict({"status": f"{styles} reverse", "normal": f"{styles}"})
 
 
-style = create_style()
-
 application = Application(
     layout=Layout(DynamicContainer(layout), focused_element=layout.input),
     key_bindings=kb,
-    style=style,
     mouse_support=False,
     full_screen=True,
     enable_page_navigation_bindings=False,
