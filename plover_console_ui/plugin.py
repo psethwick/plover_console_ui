@@ -1,8 +1,6 @@
 from functools import partial
 from threading import Event
 
-from prompt_toolkit.application import get_app
-
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover import log
 from plover.config import Config
@@ -16,8 +14,6 @@ from .application import application, create_style
 from .layout import layout
 from .config import console_ui_options
 
-# TODO dictionary enable/disable
-# TODO add/remove dictionaries
 # TODO readme
 # TODO gifs for readme
 # TODO publish pipeline + sanity checks
@@ -41,7 +37,6 @@ def show_error(title, message):
 def config_saver(config: Config, output, update):
     # only necessary if version of plover is older than the config fixes
     # probably will remove this after 4.0.0 released
-    output(update)
     if hasattr(config, "target_file"):
         with open(config.target_file, "wb") as f:
             config.save(f)

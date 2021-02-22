@@ -262,7 +262,7 @@ class ConfigureCommand(Command):
     def sub_commands(self):
         ignore_here = [
             # handled elsewhere
-            "dictionaries",  # TODO separate command
+            "dictionaries",
             "machine_type",
             "machine_specific_options",
             "system_name",
