@@ -1,16 +1,14 @@
-# TODO it is unclear whether doing it manually (like this)
-# is better or worse than hacking extra options into plover's config class
-section = "Console UI"
+from plover.config import raw_option
+
+CONSOLE_SECTION = "Console UI"
 
 
-def getvalue(config, option):
-    if config._config.has_section(section):
-        if config._config[section][option]:
-            return config._config[section][option]
-    return None
+def dummy_validate(config, key, value):
+    # TODO maybe we can check this in advace from prompt toolkit
+    return value
 
 
-def setvalue(config, option, value):
-    if not config._config.has_section(section):
-        config._config.add_section(section)
-    config._config.set(section, option, value)
+console_ui_options = [
+    # TODO show dictionary pane? (boolean_option)
+    raw_option("console_ui_fg", None, CONSOLE_SECTION, "fg", dummy_validate)
+]

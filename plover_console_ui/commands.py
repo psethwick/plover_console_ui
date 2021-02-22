@@ -5,7 +5,6 @@ from plover.registry import registry
 
 from .suggestions import format_suggestions
 from .application import create_style
-from .config import setvalue
 
 
 class Command:
@@ -38,8 +37,8 @@ class Command:
 class ColorCommand(Command):
     """sets foreground color of console (web colors or hexes should work)"""
 
-    def __init__(self, output, config) -> None:
-        self.config = config
+    def __init__(self, output, engine) -> None:
+        self.engine = engine
         super().__init__("color", output)
 
     def handle(self, words=[]):
@@ -50,7 +49,7 @@ class ColorCommand(Command):
             get_app().style = create_style(color)
             # above line will throw if prompt_toolkit hates it
             # it's ok to set it in config now
-            setvalue(self.config, "fg", color)
+            self.engine.config = {"console_ui_fg": color}
             return True
         return False
 
@@ -256,7 +255,7 @@ class ConfigureCommand(Command):
             "start_minimized",
             # live in the future, fix it if there are complaints
             "classic_dictionaries_display_order",
-            # ignore this forever
+            # ignore this forever (maybe)
             "system_keymap",
             # handled seperately
             "enabled_extensions",
@@ -353,7 +352,7 @@ def build_commands(engine, layout):
                 [
                     ToggleTapeCommand(output, layout.toggle_tape, engine),
                     ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
-                    ColorCommand(output, engine._config),
+                    ColorCommand(output, engine),
                 ],
             ),
             ExitCommand(output),

@@ -3,7 +3,7 @@ from threading import Event
 
 from plover.oslayer.keyboardcontrol import KeyboardEmulation
 from plover import log
-from plover.config import Config
+from plover.config import Config, plugin_option
 
 # this will never come back to bite me
 from plover.log import __logger
@@ -12,7 +12,7 @@ from .console_engine import ConsoleEngine
 from .notification import ConsoleNotificationHandler
 from .application import application, create_style
 from .layout import layout
-from .config import getvalue
+from .config import console_ui_options
 
 # TODO dictionary enable/disable
 # TODO add/remove dictionaries
@@ -56,6 +56,9 @@ def main(config: Config):
     # lets set up something better
     log.add_handler(ConsoleNotificationHandler(layout.output_to_console))
 
+    for option in console_ui_options:
+        config._OPTIONS[option.name] = option
+
     engine = ConsoleEngine(config, KeyboardEmulation(), layout)
 
     if not engine.load_config():
@@ -72,9 +75,7 @@ def main(config: Config):
     if engine.config["show_stroke_display"]:
         layout.toggle_tape()
 
-    # TODO definitely get rid of this garbage
-    # throw stuff on the Config._OPTIONS I think
-    fg = getvalue(engine._config, "fg")
+    fg = engine.config["console_ui_fg"] if engine.config["console_ui_fg"] else None
 
     if fg:
         application.style = create_style(fg)
