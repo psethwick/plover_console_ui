@@ -20,9 +20,6 @@ def status_bar_text(engine) -> str:
     )
 
 
-# TODO hook dictionaries_loaded
-
-
 class ConsoleEngine(StenoEngine, Thread):
     def __init__(self, config, keyboard_emulation, layout: ConsoleLayout):
         StenoEngine.__init__(self, config, keyboard_emulation)

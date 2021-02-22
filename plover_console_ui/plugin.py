@@ -41,6 +41,7 @@ def show_error(title, message):
 def config_saver(config: Config, output, update):
     # only necessary if version of plover is older than the config fixes
     # probably will remove this after 4.0.0 released
+    output(update)
     if hasattr(config, "target_file"):
         with open(config.target_file, "wb") as f:
             config.save(f)

@@ -346,18 +346,57 @@ class ConfigureOptionCommand(Command):
         return True
 
 
+class DictionariesCommand(Command):
+    def __init__(self, output, engine) -> None:
+        engine.hook_connect("dictionaries_loaded", self.on_dictionaries_loaded)
+        self.engine = engine
+        self.dicts = []
+        super().__init__("dictionaries", output)
+
+    def format_dictionary(self, index, path):
+        return f"{index +1}. {path}"
+
+    def on_dictionaries_loaded(self, dicts):
+        self.dicts = dicts
+
+    def sub_commands(self):
+        return [
+            ToggleDictionaryCommand(
+                self.format_dictionary(i, d), self.output, self.dicts[d], self.engine
+            )
+            for i, d in enumerate(self.dicts)
+        ]
+
+
+class ToggleDictionaryCommand(Command):
+    def __init__(self, name, output, dictionary, engine) -> None:
+        self.__doc__ = "Enabled" if dictionary.enabled else "Disabled"
+        self.engine = engine
+        self.dictionary = dictionary
+        super().__init__(name, output)
+
+    def handle(self, words=[]):
+        dicts = self.engine.config["dictionaries"].copy()
+        for d in dicts:
+            if d.path == self.dictionary.path:
+                d.enabled = not self.dictionary.enabled
+
+        self.engine.config = {"dictionaries": dicts}
+        return True
+
+
 def build_commands(engine, layout):
     output = layout.output_to_console
     return Command(
         name=None,
         output=output,
         sub_commands=[
+            LookupCommand(output, engine),
+            ResetMachineCommand(output, engine.reset_machine),
             MachineCommand(output, engine),
             SystemCommand(output, engine),
             ConfigureCommand(output, engine),
-            # dictionary?
-            LookupCommand(output, engine),
-            ResetMachineCommand(output, engine.reset_machine),
+            DictionariesCommand(output, engine),
             ToggleOutputCommand(output, engine),
             ToggleTapeCommand(output, layout.toggle_tape, engine),
             ToggleSuggestionsCommand(output, layout.toggle_suggestions, engine),
