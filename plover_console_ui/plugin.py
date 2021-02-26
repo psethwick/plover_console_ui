@@ -9,7 +9,7 @@ from plover.config import Config
 from plover.log import __logger
 
 from .console_engine import ConsoleEngine
-from .notification import ConsoleNotificationHandler
+from .notification import notification_handler
 from .application import application, create_style
 from .layout import layout
 from .config import console_ui_options
@@ -61,8 +61,9 @@ def main(config: Config):
         partial(config_saver, config, layout.output_to_console),
     )
 
-    level = engine.config["console_ui_loglevel"]
-    log.add_handler(ConsoleNotificationHandler(level, layout.output_to_console))
+    notification_handler.set_output(layout.output_to_console)
+    notification_handler.setLevel(engine.config["console_ui_loglevel"])
+    log.add_handler(notification_handler)
 
     if engine.config["show_suggestions_display"]:
         layout.toggle_suggestions()

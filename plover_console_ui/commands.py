@@ -8,6 +8,7 @@ from plover.config import DictionaryConfig
 from .suggestions import format_suggestions
 from .application import create_style
 from .config import log_levels
+from .notification import notification_handler
 
 
 class Command:
@@ -310,6 +311,7 @@ class SetLogLevel(Command):
 
     def handle(self, words=None):
         self.output(f"setting level to {self.name}")
+        notification_handler.setLevel(self.name)
         self.engine.config = {"console_ui_loglevel": self.name}
         return True
 
