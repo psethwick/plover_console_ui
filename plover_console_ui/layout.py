@@ -11,14 +11,11 @@ from .output import output_to_buffer, output_to_buffer_position
 from .suggestions import Suggestions
 
 
-# TODO maybe a slanted version of this?
-plover_text = """ _____  _
-|  __ \| |
-| |__) | | _____   _____ _ __
-|  ___/| |/ _ \ \ / / _ \ '__|
-| |    | | (_) \ V /  __/ |
-|_|    |_|\___/ \_/ \___|_|
-
+plover_text = """ ____  __                    
+   / __ \/ /___ _   _____  _____
+  / /_/ / / __ \ | / / _ \/ ___/
+ / ____/ / /_/ / |/ /  __/ /    
+/_/   /_/\____/|___/\___/_/     
 """
 
 
@@ -40,7 +37,6 @@ class ConsoleLayout:
         self.tape = Tape()
         self.suggestions = Suggestions()
 
-        # TODO make order always the same here
         self.outputs = [self.console]
 
         self.container = HSplit(
