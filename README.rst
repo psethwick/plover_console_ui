@@ -16,22 +16,24 @@ Installing
 
 1. Open Plover
 2. Navigate to the Plugin Manager tool
-3. Select 'plover_console_ui' in the list
+3. Select ``plover_console_ui`` in the list
 4. Click install
+
+Or directly install ``plover_console_ui`` into plover's python environment
 
 Running - Linux/Mac
 #########
 
 Start plover with the --gui option:
-`plover --gui console`
+``plover --gui console``
 
 Running - Windows
 #######
 
-Due to some funky funky Windows workaround code (in plover), this plugin does not work will on the packaged Windows build
+Due to some funky funky Windows workaround code (in plover), this plugin does not work well on the packaged Windows build
 
 Here's a launcher that works:
-`python -m plover --gui console`
+``python -m plover --gui console``
 (yes, it requires essentially 'run from source')
 (I'm sorry)
 
