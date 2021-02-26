@@ -293,6 +293,7 @@ class Configure(Command):
 
 class ConfigureLogLevel(Command):
     """threshold for showing log messages in the console"""
+
     def __init__(self, output, engine) -> None:
         super().__init__("loglevel", output)
         self.engine = engine
@@ -424,7 +425,7 @@ class SelectDictionary(Command):
         return [
             ToggleDictionary(self.output, self.index, self.dictionary, self.engine),
             RemoveDictionary(self.output, self.index, self.dictionary, self.engine),
-            RePrioritiseDictionary(
+            SetPriorityDictionary(
                 self.output, self.index, self.dictionary, self.engine
             ),
         ]
@@ -468,17 +469,22 @@ class RemoveDictionary(Command):
         return True
 
 
-class RePrioritiseDictionary(Command):
+class SetPriorityDictionary(Command):
     def __init__(self, output, index, dictionary, engine) -> None:
+        max = len(engine.config["dictionaries"])
+        self.__doc__ = f"<number> 1-{max}"
         self.engine = engine
         self.index = index
         self.dictionary = dictionary
-        super().__init__("prioritise", output)
+        super().__init__("priority", output)
 
-    def sub_commands(self):
-        # TODO re-order dictionaries
-        # max/min/raise/lower
-        return []
+    def handle(self, words):
+        new_index = int("".join(words)) - 1
+        dicts = self.engine.config["dictionaries"].copy()
+        dicts.pop(self.index)
+        dicts.insert(new_index, self.dictionary.path)
+        self.engine.config = {"dictionaries": dicts}
+        return True
 
 
 def build_commands(engine, layout):

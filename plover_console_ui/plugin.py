@@ -15,7 +15,6 @@ from .layout import layout
 from .config import console_ui_options
 
 # TODO gifs for readme
-# TODO finish dictionary prioritisation
 # TODO test all features
 # post mvp
 # TODO better help command
