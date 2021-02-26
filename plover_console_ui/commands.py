@@ -7,6 +7,7 @@ from plover.config import DictionaryConfig
 
 from .suggestions import format_suggestions
 from .application import create_style
+from .config import log_levels
 
 
 class Command:
@@ -281,8 +282,35 @@ class Configure(Command):
             if option[0] not in ignore_here
         ]
 
-        options.append(ConfigureEnabledExtensions(self.output, self.engine))
+        options.extend(
+            [
+                ConfigureEnabledExtensions(self.output, self.engine),
+                ConfigureLogLevel(self.output, self.engine),
+            ]
+        )
         return options
+
+
+class ConfigureLogLevel(Command):
+    """threshold for showing log messages in the console"""
+    def __init__(self, output, engine) -> None:
+        super().__init__("loglevel", output)
+        self.engine = engine
+        self._sub_commands = [
+            SetLogLevel(level, self.output, self.engine) for level in log_levels
+        ]
+
+
+class SetLogLevel(Command):
+    def __init__(self, name, output, engine) -> None:
+        super().__init__(name, output)
+        self.engine = engine
+        self.__doc__ = f"set log level to {self.name}"
+
+    def handle(self, words=None):
+        self.output(f"setting level to {self.name}")
+        self.engine.config = {"console_ui_loglevel": self.name}
+        return True
 
 
 class ConfigureEnabledExtensions(Command):
@@ -396,6 +424,9 @@ class SelectDictionary(Command):
         return [
             ToggleDictionary(self.output, self.index, self.dictionary, self.engine),
             RemoveDictionary(self.output, self.index, self.dictionary, self.engine),
+            RePrioritiseDictionary(
+                self.output, self.index, self.dictionary, self.engine
+            ),
         ]
 
 
@@ -437,7 +468,7 @@ class RemoveDictionary(Command):
         return True
 
 
-class PrioritiseDictionary(Command):
+class RePrioritiseDictionary(Command):
     def __init__(self, output, index, dictionary, engine) -> None:
         self.engine = engine
         self.index = index
@@ -446,7 +477,7 @@ class PrioritiseDictionary(Command):
 
     def sub_commands(self):
         # TODO re-order dictionaries
-        # max/min/higher/lower
+        # max/min/raise/lower
         return []
 
 

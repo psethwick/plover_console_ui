@@ -50,9 +50,6 @@ def main(config: Config):
     log.remove_handler(__logger._platform_handler)
     __logger._platform_handler = None
 
-    # lets set up something better
-    log.add_handler(ConsoleNotificationHandler(layout.output_to_console))
-
     for option in console_ui_options:
         config._OPTIONS[option.name] = option
 
@@ -65,6 +62,9 @@ def main(config: Config):
         "config_changed",
         partial(config_saver, config, layout.output_to_console),
     )
+
+    level = engine.config["console_ui_loglevel"]
+    log.add_handler(ConsoleNotificationHandler(level, layout.output_to_console))
 
     if engine.config["show_suggestions_display"]:
         layout.toggle_suggestions()

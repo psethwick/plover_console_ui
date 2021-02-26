@@ -5,10 +5,10 @@ from plover.log import logging
 class ConsoleNotificationHandler(logging.Handler):
     """ Handler using console to show messages. """
 
-    def __init__(self, output):
+    def __init__(self, level, output):
         super().__init__()
         self.output = output
-        self.setLevel(log.WARNING)
+        self.setLevel(level)
         self.setFormatter(
             log.NoExceptionTracebackFormatter("%(levelname)s: %(message)s")
         )
