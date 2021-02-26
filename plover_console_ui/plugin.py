@@ -16,14 +16,14 @@ from .config import console_ui_options
 
 # TODO readme
 # TODO gifs for readme
-# TODO publish pipeline + sanity checks
 # TODO work out why windows is broke and at least document (pretty sure it's bdist only)
 # TODO test all features
 # post mvp
+# TODO better help command
 # TODO completers? Buffer.completer
 # TODO dictionary pane?
 # TODO style log commands and/or more styles in general
-# TODO can I get better laid-out commands?
+# TODO can I get better laid-out commands? (eg. get a nice looking table)
 
 
 def show_error(title, message):
