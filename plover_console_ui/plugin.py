@@ -16,6 +16,7 @@ from .config import console_ui_options
 
 # TODO gifs for readme
 # TODO test all features
+# TODO make sure it's all discoverable
 
 
 def show_error(title, message):
