@@ -11,8 +11,6 @@ Requires Plover version 4.0.0 or later
 .. image:: https://img.shields.io/pypi/dm/plover_console_ui.svg
     :target: https://pypi.org/project/plover-console-ui/
 
-# TODO pretty stuff
-
 Installing
 ##########
 

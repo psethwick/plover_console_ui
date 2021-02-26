@@ -14,7 +14,6 @@ from .application import application, create_style
 from .layout import layout
 from .config import console_ui_options
 
-# TODO readme
 # TODO gifs for readme
 # TODO work out why windows is broke and at least document (pretty sure it's bdist only)
 # TODO test all features
