@@ -15,7 +15,7 @@ from .layout import layout
 from .config import console_ui_options
 
 # TODO gifs for readme
-# TODO work out why windows is broke and at least document (pretty sure it's bdist only)
+# TODO finish dictionary prioritisation
 # TODO test all features
 # post mvp
 # TODO better help command
