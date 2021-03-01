@@ -50,9 +50,10 @@ class SetBackgroundColor(Command):
         if words:
             background = words[0]
 
-        fg = self.engine.config["console_ui_fg"]
-        get_app().style = create_style(fg, background)
-        self.engine.config = {"console_ui_bg": background}
+        with self.engine:
+            fg = self.engine.config["console_ui_fg"]
+            get_app().style = create_style(fg, background)
+            self.engine.config = {"console_ui_bg": background}
         return True
 
 
@@ -67,10 +68,11 @@ class SetForegroundColor(Command):
         foreground = None
         if words:
             foreground = words[0]
-        bg = self.engine.config["console_ui_bg"]
-        get_app().style = create_style(foreground, bg)
+        with self.engine:
+            bg = self.engine.config["console_ui_bg"]
+            get_app().style = create_style(foreground, bg)
+            self.engine.config = {"console_ui_fg": foreground}
 
-        self.engine.config = {"console_ui_fg": foreground}
         return True
 
 
@@ -115,7 +117,8 @@ class ToggleTape(Command):
 
     def handle(self, words=[]):
         show = self.toggler()
-        self.engine.config = {"show_stroke_display": show}
+        with self.engine:
+            self.engine.config = {"show_stroke_display": show}
         self.output(f"Show tape: {show}")
         return True
 
@@ -130,7 +133,8 @@ class ToggleSuggestions(Command):
 
     def handle(self, words=[]):
         show = self.toggler()
-        self.engine.config = {"show_suggestions_display": show}
+        with self.engine:
+            self.engine.config = {"show_suggestions_display": show}
         self.output(f"Show suggestions: {show}")
         return True
 
@@ -156,12 +160,12 @@ class ToggleOutput(Command):
         super().__init__("output", output)
 
     def handle(self, words=[]):
-        if self.engine.output:
-            self.engine.output = False
-        else:
-            self.engine.output = True
-
-        state = "Enabled" if self.engine.output else "Disabled"
+        with self.engine:
+            if self.engine.output:
+                self.engine.output = False
+            else:
+                self.engine.output = True
+            state = "Enabled" if self.engine.output else "Disabled"
         self.output(f"Output: {state}")
         return True
 
@@ -190,7 +194,8 @@ class SetSystem(Command):
 
     def handle(self, words=[]):
         self.output(f"Setting system to {self.name}")
-        self.engine.config = {"system_name": self.name}
+        with self.engine:
+            self.engine.config = {"system_name": self.name}
         return True
 
 
@@ -218,22 +223,23 @@ class SetMachineOption(Command):
         self.__doc__ = f"current: {str(current)}"
 
     def handle(self, words=[]):
-        options = self.engine.config["machine_specific_options"].copy()
+        with self.engine:
+            options = self.engine.config["machine_specific_options"].copy()
 
-        if self.t is str:
-            change_to = " ".join(words)
-        elif self.t is int:
-            change_to = int("".join(words))
-        elif self.t is float:
-            change_to = float("".join(words))
-        else:
-            self.output(f"Unsupported type {self.t}, doing nothing...")
-            return True
+            if self.t is str:
+                change_to = " ".join(words)
+            elif self.t is int:
+                change_to = int("".join(words))
+            elif self.t is float:
+                change_to = float("".join(words))
+            else:
+                self.output(f"Unsupported type {self.t}, doing nothing...")
+                return True
 
-        self.output(f"setting {self.name} to {str(change_to)}")
-        options[self.name] = change_to
+            self.output(f"setting {self.name} to {str(change_to)}")
+            options[self.name] = change_to
 
-        self.engine.config = {"machine_specific_options": options}
+            self.engine.config = {"machine_specific_options": options}
 
         # this at least should throw errors if something is wrong
         # annoyingly plover seems to allow changing these to garbage
@@ -249,7 +255,8 @@ class SetMachine(Command):
 
     def handle(self, words=[]):
         self.output(f"Setting machine to {self.name}")
-        self.engine.config = {"machine_type": self.name}
+        with self.engine:
+            self.engine.config = {"machine_type": self.name}
         return True
 
 
@@ -336,15 +343,16 @@ class EnableDisableExtension(Command):
             self.__doc__ = "disabled"
 
     def handle(self, words=[]):
-        enabled: set = self.engine.config["enabled_extensions"].copy()
+        with self.engine:
+            enabled: set = self.engine.config["enabled_extensions"].copy()
 
-        if self.name in enabled:
-            self.output(f"Disabling extension {self.name}")
-            enabled.remove(self.name)
-        else:
-            self.output(f"Enabling extension {self.name}")
-            enabled.add(self.name)
-        self.engine.config = {"enabled_extensions": enabled}
+            if self.name in enabled:
+                self.output(f"Disabling extension {self.name}")
+                enabled.remove(self.name)
+            else:
+                self.output(f"Enabling extension {self.name}")
+                enabled.add(self.name)
+            self.engine.config = {"enabled_extensions": enabled}
         return True
 
 
@@ -359,42 +367,45 @@ class ConfigureOption(Command):
         super().__init__(key, output)
 
     def handle(self, words=[]):
-        if self.t is bool:
-            change_to = not self.engine.config[self.name]
-            self.output(f"Setting {self.name} to {change_to}")
-            self.engine.config = {self.name: change_to}
-        elif self.t is str:
-            change_to = " ".join(words)
-            self.output(f"Setting {self.name} to {change_to}")
-            self.engine.config = {self.name: change_to}
-        elif self.t is int:
-            change_to = int("".join(words))
-            self.output(f"Setting {self.name} to {change_to}")
-            self.engine.config = {self.name: change_to}
-        else:
-            self.output(f"Type {self.t} not supported currently")
+        with self.engine:
+            if self.t is bool:
+                change_to = not self.engine.config[self.name]
+                self.output(f"Setting {self.name} to {change_to}")
+                self.engine.config = {self.name: change_to}
+            elif self.t is str:
+                change_to = " ".join(words)
+                self.output(f"Setting {self.name} to {change_to}")
+                self.engine.config = {self.name: change_to}
+            elif self.t is int:
+                change_to = int("".join(words))
+                self.output(f"Setting {self.name} to {change_to}")
+                self.engine.config = {self.name: change_to}
+            else:
+                self.output(f"Type {self.t} not supported currently")
         return True
 
 
 class Dictionaries(Command):
     def __init__(self, output, engine) -> None:
-        engine.hook_connect("dictionaries_loaded", self.on_dictionaries_loaded)
         self.engine = engine
-        self.dicts = []
         super().__init__("dictionaries", output)
 
-    def format_dictionary(self, index, path):
-        return f"{index +1}. {path}"
+    def format_dictionary(self, index, dict):
+        enabled = "Enabled" if dict.enabled else "Disabled"
+        return f"{index +1}. {dict.path} {enabled}"
 
-    def on_dictionaries_loaded(self, dicts):
-        self.dicts = dicts
+    def describe(self):
+        super().describe()
+        dicts = self.engine.config["dictionaries"]
+        for i, d in enumerate(dicts):
+            self.output(self.format_dictionary(i, d))
 
     def sub_commands(self):
-        return [AddDictionary(self.output, self.engine)] + [
-            SelectDictionary(
-                self.format_dictionary(i, d), self.output, i, self.dicts[d], self.engine
-            )
-            for i, d in enumerate(self.dicts)
+        return [
+            AddDictionary(self.output, self.engine),
+            RemoveDictionary(self.output, self.engine),
+            ToggleDictionary(self.output, self.engine),
+            SetPriorityDictionary(self.output, self.engine),
         ]
 
 
@@ -407,85 +418,65 @@ class AddDictionary(Command):
 
     def handle(self, words=[]):
         path = normalize_path(" ".join(words))
-        dicts = self.engine.config["dictionaries"].copy()
+        with self.engine:
+            dicts = self.engine.config["dictionaries"].copy()
 
-        dicts.insert(0, DictionaryConfig(path))
+            dicts.insert(0, DictionaryConfig(path))
 
-        self.engine.config = {"dictionaries": dicts}
-        return True
-
-
-class SelectDictionary(Command):
-    def __init__(self, name, output, index, dictionary, engine) -> None:
-        self.__doc__ = "Enabled" if dictionary.enabled else "Disabled"
-        self.engine = engine
-        self.index = index
-        self.dictionary = dictionary
-        super().__init__(name, output)
-
-    def sub_commands(self):
-        return [
-            ToggleDictionary(self.output, self.index, self.dictionary, self.engine),
-            RemoveDictionary(self.output, self.index, self.dictionary, self.engine),
-            SetPriorityDictionary(
-                self.output, self.index, self.dictionary, self.engine
-            ),
-        ]
+            self.engine.config = {"dictionaries": dicts}
+            return True
 
 
 class ToggleDictionary(Command):
-    def __init__(self, output, index, dictionary, engine) -> None:
+    """<dictionary-number>"""
+
+    def __init__(self, output, engine) -> None:
         self.engine = engine
-        self.index = index
-        self.dictionary = dictionary
-        to_state = "off" if self.dictionary.enabled else "on"
-        self.__doc__ = f"turns dictionary {to_state}"
         super().__init__("toggle", output)
 
     def handle(self, words=[]):
-        dicts = self.engine.config["dictionaries"].copy()
+        with self.engine:
+            index = int("".join(words)) - 1
+            dicts = self.engine.config["dictionaries"].copy()
 
-        dicts[self.index] = dicts[self.index].replace(
-            enabled=not self.dictionary.enabled
-        )
+            dicts[index] = dicts[index].replace(enabled=not dicts[index].enabled)
 
-        self.engine.config = {"dictionaries": dicts}
-        return True
+            self.engine.config = {"dictionaries": dicts}
+            return True
 
 
 class RemoveDictionary(Command):
-    """removes from list"""
+    """<dictionary-number>"""
 
-    def __init__(self, output, index, dictionary, engine) -> None:
+    def __init__(self, output, engine) -> None:
         self.engine = engine
-        self.index = index
-        self.dictionary = dictionary
         super().__init__("remove", output)
 
     def handle(self, words=[]):
-        dicts = self.engine.config["dictionaries"].copy()
-
-        dicts.remove(dicts[self.index])
-
-        self.engine.config = {"dictionaries": dicts}
-        return True
+        index = int("".join(words)) - 1
+        with self.engine:
+            dicts = self.engine.config["dictionaries"].copy()
+            dicts.remove(dicts[index])
+            self.engine.config = {"dictionaries": dicts}
+            return True
 
 
 class SetPriorityDictionary(Command):
-    def __init__(self, output, index, dictionary, engine) -> None:
-        max = len(engine.config["dictionaries"])
-        self.__doc__ = f"<number> 1-{max}"
+    """<dictionary-number> <new-dictionary-number>"""
+
+    def __init__(self, output, engine) -> None:
         self.engine = engine
-        self.index = index
-        self.dictionary = dictionary
         super().__init__("priority", output)
 
     def handle(self, words):
-        new_index = int("".join(words)) - 1
-        dicts = self.engine.config["dictionaries"].copy()
-        dicts.pop(self.index)
-        dicts.insert(new_index, self.dictionary.path)
-        self.engine.config = {"dictionaries": dicts}
+        dictionary = int(words[0]) - 1
+        new_index = int(words[1]) - 1
+        with self.engine:
+            dicts = self.engine.config["dictionaries"].copy()
+            d = dicts.pop(dictionary)
+            dicts.insert(new_index, d)
+            self.engine.config = {"dictionaries": dicts}
+
         return True
 
 

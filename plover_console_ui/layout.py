@@ -11,7 +11,8 @@ from .output import output_to_buffer, output_to_buffer_position
 from .suggestions import Suggestions
 
 
-plover_text = """ ____  __                    
+plover_text = """
+    ____  __                    
    / __ \/ /___ _   _____  _____
   / /_/ / / __ \ | / / _ \/ ___/
  / ____/ / /_/ / |/ /  __/ /    
