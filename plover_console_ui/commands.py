@@ -1,3 +1,5 @@
+from os.path import isfile
+
 from prompt_toolkit.application import get_app
 
 from plover.translation import unescape_translation
@@ -418,6 +420,9 @@ class AddDictionary(Command):
 
     def handle(self, words=[]):
         path = normalize_path(" ".join(words))
+        if not isfile(path):
+            self.output(f"{path} is not a file")
+            return True
         with self.engine:
             dicts = self.engine.config["dictionaries"].copy()
 
