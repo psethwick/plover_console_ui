@@ -24,7 +24,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8
-        python -m pip install https://github.com/openstenoproject/plover/releases/download/weekly-v4.0.0.dev8%2B66.g685bd33/plover-4.0.0.dev8.66.g685bd33.tar.gz
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
