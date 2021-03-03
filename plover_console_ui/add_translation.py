@@ -142,13 +142,13 @@ class AddTranslation:
         self.update_output()
 
     def update_output(self):
-        output = "Add translation\n" "---------------\n"
+        output = "Add translation" "\n---------------"
         if self.strokes_info:
-            output += f"{self.strokes_info}\n"
+            output += f"\n{self.strokes_info}"
         if self.translation_info:
-            output += f"{self.translation_info}\n"
+            output += f"\n{self.translation_info}"
 
         if self.outcome:
-            output += f"---------------\n{self.outcome}"
+            output += f"\n---------------\n{self.outcome}"
 
         self.on_output(output)

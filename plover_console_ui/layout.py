@@ -88,6 +88,8 @@ class ConsoleLayout:
         )
         self.input = at.container
 
+        at.update_output()
+
         app = get_app()
         app.invalidate()
         app.layout.focus(at.strokes_field)
