@@ -20,11 +20,9 @@ class Tape(Frame):
         self._all_keys_filler = None
 
     def on(self):
-        self.engine.hook_connect("config_changed", self.on_config_changed)
         self.engine.hook_connect("stroked", self.on_stroked)
 
     def off(self):
-        self.engine.hook_disconnect("config_changed", self.on_config_changed)
         self.engine.hook_disconnect("stroked", self.on_stroked)
 
     def on_config_changed(self, update):

@@ -31,6 +31,7 @@ class ConsoleEngine(StenoEngine, Thread):
         layout.suggestions.engine = self
         layout.tape.engine = self
 
+        self.hook_connect("config_changed", layout.tape.on_config_changed)
         self.hook_connect("add_translation", partial(layout.on_add_translation, self))
         self.cmder = Commander(build_commands(self, layout), layout.output_to_console)
 
