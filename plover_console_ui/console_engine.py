@@ -2,6 +2,7 @@ from functools import partial
 from threading import Thread, current_thread
 
 from plover.engine import StenoEngine
+from prompt_toolkit.application.current import get_app
 
 from prompt_toolkit.layout.processors import BeforeInput
 
@@ -39,6 +40,7 @@ class ConsoleEngine(StenoEngine, Thread):
             focus_console()
             layout.cmder_input.text = ""
             self.cmder.set_state(["lookup"], layout.exit_modal)
+            get_app().invalidate()
 
         self.hook_connect("lookup", on_lookup)
 
@@ -46,6 +48,7 @@ class ConsoleEngine(StenoEngine, Thread):
             focus_console()
             layout.cmder_input.text = ""
             self.cmder.set_state(["configure"], layout.exit_modal)
+            get_app().invalidate()
 
         self.hook_connect("configure", on_configure)
 

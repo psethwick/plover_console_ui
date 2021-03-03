@@ -87,7 +87,10 @@ class ConsoleLayout:
             self.exit_modal,
         )
         self.input = at.container
-        get_app().layout.focus(at.strokes_field)
+
+        app = get_app()
+        app.invalidate()
+        app.layout.focus(at.strokes_field)
 
 
 layout = ConsoleLayout()
