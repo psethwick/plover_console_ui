@@ -4,7 +4,7 @@ from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer
 from prompt_toolkit.widgets import TextArea, Frame, Label
 from prompt_toolkit.application import get_app
 
-from .focus import focus
+from .focus import focus_prev, focus_console
 from .add_translation import AddTranslation
 from .tape import Tape
 from .output import output_to_buffer, output_to_buffer_position
@@ -68,20 +68,13 @@ class ConsoleLayout:
             self.outputs.append(item)
             return True
 
-    def focus_console(self):
-        focus.set_prev()
-        focus.console()
-
-    def focus_toggle(self):
-        focus.toggle()
-
     def exit_modal(self):
         self.input = self.cmder_input
         get_app().layout.focus(self.cmder_input)
-        focus.prev()
+        focus_prev()
 
     def on_add_translation(self, engine):
-        self.focus_console()
+        focus_console()
         at = AddTranslation(
             engine,
             partial(

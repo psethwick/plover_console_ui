@@ -8,6 +8,7 @@ from prompt_toolkit.layout.processors import BeforeInput
 from .commander import Commander
 from .commands import build_commands
 from .layout import ConsoleLayout
+from .focus import focus_toggle, focus_console
 
 
 def status_bar_text(engine) -> str:
@@ -26,7 +27,7 @@ class ConsoleEngine(StenoEngine, Thread):
         Thread.__init__(self)
         self.name += "-engine"
         self.layout = layout
-        self.hook_connect("focus", layout.focus_toggle)
+        self.hook_connect("focus", focus_toggle)
         self.hook_connect(
             "translated",
             partial(self.layout.suggestions.on_translated, self),
@@ -35,14 +36,14 @@ class ConsoleEngine(StenoEngine, Thread):
         self.cmder = Commander(build_commands(self, layout), layout.output_to_console)
 
         def on_lookup():
-            layout.focus_console()
+            focus_console()
             self.layout.cmder_input.text = ""
             self.cmder.set_state(["lookup"], layout.exit_modal)
 
         self.hook_connect("lookup", on_lookup)
 
         def on_configure():
-            layout.focus_console()
+            focus_console()
             self.layout.cmder_input.text = ""
             self.cmder.set_state(["configure"], layout.exit_modal)
 

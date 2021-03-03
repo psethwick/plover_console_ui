@@ -12,19 +12,24 @@ class Focus:
     def toggle(self) -> None:
         current = GetForegroundWindow()
         if current == self.console:
-            self.prev()
+            self.focus_prev()
         else:
             self.prev = current
-            self.console()
+            self.focus_console()
 
     def set_prev(self):
         self.prev = GetForegroundWindow()
 
-    def prev(self):
+    def focus_prev(self):
         SetForegroundWindow(self.prev)
 
-    def console(self):
+    def focus_console(self):
+        self.set_prev()
         SetForegroundWindow(self.console)
 
 
 focus = Focus()
+
+focus_console = focus.focus_console
+focus_prev = focus.focus_prev
+focus_toggle = focus.toggle
