@@ -29,6 +29,7 @@ def format_suggestions(suggestions):
 
 class Suggestions(Frame):
     def __init__(self):
+        self.engine = None
         super().__init__(
             TextArea(focusable=False), title="Suggestions", style="class:normal"
         )
@@ -36,8 +37,14 @@ class Suggestions(Frame):
     def output(self, text):
         output_to_buffer(self.body.buffer, text)
 
+    def on(self):
+        self.engine.hook_connect("translated", self.on_translated)
+
+    def off(self):
+        self.engine.hook_disconnect("translated", self.on_translated)
+
     # TODO perhaps this algo could use some work
-    def on_translated(self, engine, old, new):
+    def on_translated(self, old, new):
         # Check for new output.
         for a in reversed(new):
             if a.text and not a.text.isspace():
@@ -45,14 +52,14 @@ class Suggestions(Frame):
         else:
             return
 
-        last_translations = engine.translator_state.translations
+        last_translations = self.engine.translator_state.translations
         retro_formatter = RetroFormatter(last_translations)
         split_words = retro_formatter.last_words(10, rx=WORD_RX)
 
         suggestion_list = []
         for phrase in tails(split_words):
             phrase = "".join(phrase)
-            suggestion_list.extend(engine.get_suggestions(phrase))
+            suggestion_list.extend(self.engine.get_suggestions(phrase))
 
         if suggestion_list:
             self.output(format_suggestions(suggestion_list))

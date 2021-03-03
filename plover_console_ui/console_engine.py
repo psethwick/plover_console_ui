@@ -26,32 +26,27 @@ class ConsoleEngine(StenoEngine, Thread):
         StenoEngine.__init__(self, config, keyboard_emulation)
         Thread.__init__(self)
         self.name += "-engine"
-        self.layout = layout
         self.hook_connect("focus", focus_toggle)
-        self.hook_connect(
-            "translated",
-            partial(self.layout.suggestions.on_translated, self),
-        )
+
+        layout.suggestions.engine = self
+        layout.tape.engine = self
+
         self.hook_connect("add_translation", partial(layout.on_add_translation, self))
         self.cmder = Commander(build_commands(self, layout), layout.output_to_console)
 
         def on_lookup():
             focus_console()
-            self.layout.cmder_input.text = ""
+            layout.cmder_input.text = ""
             self.cmder.set_state(["lookup"], layout.exit_modal)
 
         self.hook_connect("lookup", on_lookup)
 
         def on_configure():
             focus_console()
-            self.layout.cmder_input.text = ""
+            layout.cmder_input.text = ""
             self.cmder.set_state(["configure"], layout.exit_modal)
 
         self.hook_connect("configure", on_configure)
-
-        # tape hooks
-        self.hook_connect("config_changed", layout.tape.on_config_changed)
-        self.hook_connect("stroked", layout.tape.on_stroked)
 
         def on_quit():
             self.cmder.set_state([])

@@ -15,8 +15,17 @@ class Tape(Frame):
         super().__init__(
             TextArea(focusable=False), title="Paper Tape", style="class:normal"
         )
+        self.engine = None
         self._all_keys = None
         self._all_keys_filler = None
+
+    def on(self):
+        self.engine.hook_connect("config_changed", self.on_config_changed)
+        self.engine.hook_connect("stroked", self.on_stroked)
+
+    def off(self):
+        self.engine.hook_disconnect("config_changed", self.on_config_changed)
+        self.engine.hook_disconnect("stroked", self.on_stroked)
 
     def on_config_changed(self, update):
         if "system_name" in update:

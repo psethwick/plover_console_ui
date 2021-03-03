@@ -62,9 +62,11 @@ class ConsoleLayout:
 
     def _toggle(self, item):
         if item in self.outputs:
+            item.off()
             self.outputs.remove(item)
             return False
         else:
+            item.on()
             self.outputs.append(item)
             return True
 
