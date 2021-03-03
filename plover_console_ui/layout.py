@@ -72,7 +72,9 @@ class ConsoleLayout:
 
     def exit_modal(self):
         self.input = self.cmder_input
-        get_app().layout.focus(self.cmder_input)
+        app = get_app()
+        app.invalidate()
+        app.layout.focus(self.cmder_input)
         focus_prev()
 
     def on_add_translation(self, engine):
