@@ -21,11 +21,13 @@ class Focus:
         self.prev = GetForegroundWindow()
 
     def focus_prev(self):
-        SetForegroundWindow(self.prev)
+        if self.prev:
+            SetForegroundWindow(self.prev)
 
     def focus_console(self):
         self.set_prev()
-        SetForegroundWindow(self.console)
+        if self.console:
+            SetForegroundWindow(self.console)
 
 
 focus = Focus()
