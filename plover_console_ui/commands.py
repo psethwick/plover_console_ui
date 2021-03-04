@@ -276,6 +276,9 @@ class Configure(Command):
             "system_name",
             "show_stroke_display",
             "show_suggestions_display",
+            "console_ui_loglevel",
+            "console_ui_fg",
+            "console_ui_bg",
             # we have no control over these
             "translation_frame_opacity",
             "start_minimized",
@@ -285,9 +288,6 @@ class Configure(Command):
             "system_keymap",
             # handled seperately
             "enabled_extensions",
-            "console_ui_loglevel",
-            "console_ui_fg",
-            "console_ui_bg",
         ]
         options = [
             ConfigureOption(self.output, self.engine, option)

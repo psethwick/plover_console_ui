@@ -17,6 +17,18 @@ def _(event):
     event.app.exit(0)
 
 
+@kb.add("pagedown")
+def _(event):
+    " Pressing PageDown will scroll the console window. "
+    layout.scroll_down()
+
+
+@kb.add("pageup")
+def _(event):
+    " Pressing PageUp will scroll the console window. "
+    layout.scroll_up()
+
+
 def create_style(fg=None, bg=None) -> Style:
     styles = ""
     if fg:

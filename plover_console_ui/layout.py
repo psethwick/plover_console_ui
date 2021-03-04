@@ -1,4 +1,5 @@
 from functools import partial
+from prompt_toolkit.document import Document
 
 from prompt_toolkit.layout.containers import HSplit, VSplit, DynamicContainer
 from prompt_toolkit.widgets import TextArea, Frame, Label
@@ -95,6 +96,40 @@ class ConsoleLayout:
         app = get_app()
         app.invalidate()
         app.layout.focus(at.strokes_field)
+
+    def scroll_amount(self):
+        # magic number: top frame + bottom frame + prompt line + status line
+        return get_app().output.get_size().rows - 4
+
+    def scroll_up(self):
+        doc = self.console.body.document
+        row = doc.cursor_position_row
+        window_size = self.scroll_amount()
+
+        row -= window_size
+
+        if doc.on_last_line:
+            # first scroll won't move it
+            row -= window_size
+
+        # don't over-scroll
+        row = row if row >= 0 else 0
+        new_pos = doc.translate_row_col_to_index(row=row, col=0)
+        self.console.body.document = Document(doc.text, cursor_position=new_pos)
+
+    def scroll_down(self):
+        doc = self.console.body.document
+        row = doc.cursor_position_row
+        window_size = self.scroll_amount()
+
+        row += window_size
+
+        if doc.on_first_line:
+            # first scroll won't move it
+            row += window_size
+
+        new_pos = doc.translate_row_col_to_index(row=row, col=0)
+        self.console.body.document = Document(doc.text, cursor_position=new_pos)
 
 
 layout = ConsoleLayout()
