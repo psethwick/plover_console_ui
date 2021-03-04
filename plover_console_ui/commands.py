@@ -285,6 +285,9 @@ class Configure(Command):
             "system_keymap",
             # handled seperately
             "enabled_extensions",
+            "console_ui_loglevel",
+            "console_ui_fg",
+            "console_ui_bg",
         ]
         options = [
             ConfigureOption(self.output, self.engine, option)
@@ -295,7 +298,6 @@ class Configure(Command):
         options.extend(
             [
                 ConfigureEnabledExtensions(self.output, self.engine),
-                ConfigureLogLevel(self.output, self.engine),
             ]
         )
         return options
@@ -508,6 +510,7 @@ def build_commands(engine, layout):
                     SetBackgroundColor(output, engine),
                 ],
             ),
+            ConfigureLogLevel(output, engine),
             Exit(output),
         ],
     )
