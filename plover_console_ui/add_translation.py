@@ -61,7 +61,7 @@ class AddTranslation:
         last_words = retro_formatter.last_words(1)
 
         if last_words:
-            self.translation_field.text = last_words[0].replace("\n", "")
+            self.translation_field.text = last_words[0].replace("\n", "").rstrip()
 
         kb = KeyBindings()
 
