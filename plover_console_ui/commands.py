@@ -389,20 +389,39 @@ class ConfigureOption(Command):
         return True
 
 
-class Dictionaries(Command):
-    def __init__(self, output, engine) -> None:
+class DictionaryHelper:
+    def __init__(self, engine, output):
         self.engine = engine
-        super().__init__("dictionaries", output)
+        self.output = output
+        engine.hook_connect("dictionaries_loaded", self.dictionaries_loaded)
 
     def format_dictionary(self, index, dict):
         enabled = "Enabled" if dict.enabled else "Disabled"
         return f"{index +1}. {dict.path} {enabled}"
 
-    def describe(self):
-        super().describe()
+    def output_dictionaries(self):
+        self.output("--------")
         dicts = self.engine.config["dictionaries"]
         for i, d in enumerate(dicts):
             self.output(self.format_dictionary(i, d))
+
+    def dictionaries_loaded(self, dicts):
+        self.engine.hook_connect("config_changed", self.config_changed)
+
+    def config_changed(self, update):
+        if "dictionaries" in update:
+            self.output_dictionaries()
+
+
+class Dictionaries(Command):
+    def __init__(self, output, engine) -> None:
+        self.engine = engine
+        super().__init__("dictionaries", output)
+        self.helper = DictionaryHelper(engine, output)
+
+    def describe(self):
+        super().describe()
+        self.helper.output_dictionaries()
 
     def sub_commands(self):
         return [
