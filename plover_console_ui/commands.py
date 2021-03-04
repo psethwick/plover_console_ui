@@ -25,6 +25,7 @@ class Command:
     def handle(self, words=[]):
         if words:
             self.output("Unsupported command: " + " ".join(words))
+            return True
         else:
             self.describe()
         return False
