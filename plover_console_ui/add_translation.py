@@ -11,16 +11,7 @@ from plover.steno import sort_steno_strokes
 from plover.translation import escape_translation
 from plover.formatting import RetroFormatter
 
-
-def dictionary_filter(key, value):
-    # Allow undo...
-    if value == "=undo":
-        return False
-    # ...and translations with special entries. Do this by looking for
-    # braces but take into account escaped braces and slashes.
-    escaped = value.replace("\\\\", "").replace("\\{", "")
-    special = "{#" in escaped or "{PLOVER:" in escaped
-    return not special
+from .dictionary_filter import add_filter, remove_filter
 
 
 def format_label(fmt, strokes, translation):
@@ -42,7 +33,7 @@ class AddTranslation:
         self.strokes_info = ""
         self.translation_info = ""
         # we start in the strokes field
-        self.engine.add_dictionary_filter(dictionary_filter)
+        add_filter(engine)
 
         self.strokes_field = TextArea(
             prompt="Strokes: ",
@@ -70,15 +61,14 @@ class AddTranslation:
         last_words = retro_formatter.last_words(1)
 
         if last_words:
-            self.translation_field.text = last_words[0]
+            self.translation_field.text = last_words[0].replace("\n", "")
 
         kb = KeyBindings()
 
         @kb.add("escape", eager=True)
         def _(event):
             layout = get_app().layout
-            if layout.has_focus(self.strokes_field):
-                self.engine.remove_dictionary_filter(dictionary_filter)
+            remove_filter(self.engine)
             self.outcome = "Add translation abandoned"
             self.update_output()
             on_exit()
@@ -98,9 +88,9 @@ class AddTranslation:
     def cycle_focus(self):
         layout = get_app().layout
         if layout.has_focus(self.strokes_field):
-            self.engine.remove_dictionary_filter(dictionary_filter)
+            remove_filter(self.engine)
         else:
-            self.engine.add_dictionary_filter(dictionary_filter)
+            add_filter(self.engine)
         layout.focus_next()
 
     def accept(self, _):
@@ -108,6 +98,7 @@ class AddTranslation:
             self.engine.add_translation(self.strokes(), self.translation_field.text)
             self.outcome = "Translation added"
             self.update_output()
+            remove_filter(self.engine)
             self.on_exit()
         else:
             self.outcome = "Invalid"

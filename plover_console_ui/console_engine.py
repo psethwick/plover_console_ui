@@ -10,6 +10,7 @@ from .commander import Commander
 from .commands import build_commands
 from .layout import ConsoleLayout
 from .focus import focus_toggle, focus_console
+from .dictionary_filter import remove_filter
 
 
 def status_bar_text(engine) -> str:
@@ -39,6 +40,7 @@ class ConsoleEngine(StenoEngine, Thread):
         def on_lookup():
             focus_console()
             layout.cmder_input.text = ""
+            remove_filter(self)
             self.cmder.set_state(["lookup"], layout.exit_modal)
             get_app().invalidate()
 
@@ -47,6 +49,7 @@ class ConsoleEngine(StenoEngine, Thread):
         def on_configure():
             focus_console()
             layout.cmder_input.text = ""
+            remove_filter(self)
             self.cmder.set_state(["configure"], layout.exit_modal)
             get_app().invalidate()
 
