@@ -1,4 +1,5 @@
 from os.path import isfile
+from functools import partial
 
 from prompt_toolkit.application import get_app
 
@@ -307,9 +308,7 @@ class Configure(Command):
         return options
 
 
-class ConfigureLogLevel(Command):
-    """threshold for showing log messages in the console"""
-
+class LogLevel(Command):
     def __init__(self, output, engine) -> None:
         super().__init__("loglevel", output)
         self.engine = engine
@@ -510,19 +509,32 @@ class SetPriorityDictionary(Command):
         return True
 
 
+class AddTranslation(Command):
+    """enter add-translation mode"""
+
+    def __init__(self, output, add_translation):
+        self.add_translation = add_translation
+        super().__init__("addtranslation", output)
+
+    def handle(self, words=None):
+        self.add_translation()
+        return True
+
+
 def build_commands(engine, layout):
     output = layout.output_to_console
     return Command(
         name=None,
         output=output,
         sub_commands=[
+            AddTranslation(output, partial(layout.on_add_translation, engine)),
             Lookup(output, engine),
+            ToggleOutput(output, engine),
             ResetMachine(output, engine.reset_machine),
+            Dictionaries(output, engine),
             Machine(output, engine),
             System(output, engine),
             Configure(output, engine),
-            Dictionaries(output, engine),
-            ToggleOutput(output, engine),
             ToggleTape(output, layout.toggle_tape, engine),
             ToggleSuggestions(output, layout.toggle_suggestions, engine),
             Command(
@@ -533,7 +545,7 @@ def build_commands(engine, layout):
                     SetBackgroundColor(output, engine),
                 ],
             ),
-            ConfigureLogLevel(output, engine),
+            LogLevel(output, engine),
             Exit(output),
         ],
     )

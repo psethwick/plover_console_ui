@@ -67,8 +67,6 @@ class ConsoleEngine(StenoEngine, Thread):
 
         layout.cmder_input.accept_handler = self.cmder
         layout.status_bar.text = partial(status_bar_text, self)
-        # nice starter
-        self.cmder.handle_command(["help"])
 
     def _in_engine_thread(self):
         return current_thread() == self
