@@ -1,6 +1,6 @@
 from prompt_toolkit.buffer import Buffer
 
-from .commands import Command
+from .commands import Command, UnsupportedCommand
 
 
 def peek(list):
@@ -38,6 +38,8 @@ class Commander:
 
             self.handle_command(words)
 
+        except UnsupportedCommand:
+            self.output("Unsupported command: " + buff.text)
         except BaseException as e:
             self.output(f"Error: {e}")
 

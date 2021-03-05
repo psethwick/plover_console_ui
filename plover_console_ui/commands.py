@@ -13,6 +13,10 @@ from .config import log_levels
 from .notification import notification_handler
 
 
+class UnsupportedCommand(Exception):
+    pass
+
+
 class Command:
     def __init__(self, name, output, sub_commands=[]) -> None:
         self.name = name
@@ -24,8 +28,7 @@ class Command:
 
     def handle(self, words=[]):
         if words:
-            self.output("Unsupported command: " + " ".join(words))
-            return True
+            raise UnsupportedCommand()
         else:
             self.describe()
         return False
