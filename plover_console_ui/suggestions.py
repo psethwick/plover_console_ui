@@ -31,7 +31,7 @@ class Suggestions(Frame):
     def __init__(self):
         self.engine = None
         super().__init__(
-            TextArea(focusable=False), title="Suggestions", style="class:normal"
+            TextArea(focusable=False, width=23), title="Suggestions", style="class:normal"
         )
 
     def output(self, text):

@@ -30,7 +30,8 @@ class Tape(Frame):
             self._all_keys = "".join(key.strip("-") for key in system.KEYS)
             self._all_keys_filler = [" " * wcwidth(k) for k in self._all_keys]
             self._numbers = set(system.NUMBERS.values())
-            self.container.width = len(self._all_keys) + 1
+            # needs +2 to account for the Frame edges
+            self.container.width = len(self._all_keys) + 2
 
     def on_stroked(self, stroke):
         text = self._all_keys_filler * 1

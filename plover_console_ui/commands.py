@@ -35,9 +35,11 @@ class Command:
         return False
 
     def describe(self):
-        section = self.name if self.name else "console"
-        self.output(section.capitalize())
-        self.output("".join(["-" for _ in section]))
+        if self.name:
+            self.output(self.name.capitalize())
+            self.output("".join(["-" for _ in self.name]))
+        else:
+            self.output("----")
 
         if self.sub_commands():
             for sc in self.sub_commands():
@@ -46,7 +48,7 @@ class Command:
 
 
 class SetBackgroundColor(Command):
-    """<web-name or hex>"""
+    """<web-name or hex> (leave blank to clear)"""
 
     def __init__(self, output, engine):
         self.engine = engine
@@ -56,6 +58,9 @@ class SetBackgroundColor(Command):
         background = None
         if words:
             background = words[0]
+            self.output(f"Setting background color to {background}")
+        else:
+            self.output("Clearing background color")
 
         with self.engine:
             fg = self.engine.config["console_ui_fg"]
@@ -65,7 +70,7 @@ class SetBackgroundColor(Command):
 
 
 class SetForegroundColor(Command):
-    """<web-name or hex>"""
+    """<web-name or hex> (leave blank to clear)"""
 
     def __init__(self, output, engine):
         self.engine = engine
@@ -75,6 +80,9 @@ class SetForegroundColor(Command):
         foreground = None
         if words:
             foreground = words[0]
+            self.output(f"Setting foreground color to {foreground}")
+        else:
+            self.output("Clearing foreground color")
         with self.engine:
             bg = self.engine.config["console_ui_bg"]
             get_app().style = create_style(foreground, bg)
@@ -114,7 +122,7 @@ class Lookup(Command):
         return True
 
 
-class ToggleTape(Command):
+class Tape(Command):
     """toggles tape"""
 
     def __init__(self, output, toggler, engine):
@@ -126,11 +134,12 @@ class ToggleTape(Command):
         show = self.toggler()
         with self.engine:
             self.engine.config = {"show_stroke_display": show}
-        self.output(f"Show tape: {show}")
+        desc = "on" if show else "off"
+        self.output(f"Tape: {desc}")
         return True
 
 
-class ToggleSuggestions(Command):
+class Suggestions(Command):
     """toggles suggestions"""
 
     def __init__(self, output, toggler, engine):
@@ -142,7 +151,7 @@ class ToggleSuggestions(Command):
         show = self.toggler()
         with self.engine:
             self.engine.config = {"show_suggestions_display": show}
-        self.output(f"Show suggestions: {show}")
+        self.output(f"Suggestions: {show}")
         return True
 
 
@@ -159,7 +168,7 @@ class ResetMachine(Command):
         return True
 
 
-class ToggleOutput(Command):
+class Output(Command):
     """enables/disables output"""
 
     def __init__(self, output, engine):
@@ -170,10 +179,10 @@ class ToggleOutput(Command):
         with self.engine:
             if self.engine.output:
                 self.engine.output = False
+                self.output("Output: off")
             else:
                 self.engine.output = True
-            state = "Enabled" if self.engine.output else "Disabled"
-        self.output(f"Output: {state}")
+                self.output("Output: on")
         return True
 
 
@@ -196,7 +205,7 @@ class System(Command):
 class SetSystem(Command):
     def __init__(self, system_name, output, engine) -> None:
         self.engine = engine
-        self.__doc__ = f"sets to {system_name}"
+        self.__doc__ = f"set system to {system_name}"
         super().__init__(system_name, output)
 
     def handle(self, words=[]):
@@ -257,7 +266,7 @@ class SetMachineOption(Command):
 class SetMachine(Command):
     def __init__(self, machine_name, output, engine) -> None:
         self.engine = engine
-        self.__doc__ = f"set to {machine_name}"
+        self.__doc__ = f"set machine to {machine_name}"
         super().__init__(machine_name, output)
 
     def handle(self, words=[]):
@@ -368,9 +377,7 @@ class ConfigureOption(Command):
         key, value = option
         self.engine = engine
         self.t = type(value)
-
-        self.__doc__ = str(value)
-
+        self.__doc__ = f"<{str(self.t.__name__)}> {str(value)}"
         super().__init__(key, output)
 
     def handle(self, words=[]):
@@ -448,10 +455,9 @@ class AddDictionary(Command):
             self.output(f"{path} is not a file")
             return True
         with self.engine:
+            self.output(f"Adding {path} as a dictionary")
             dicts = self.engine.config["dictionaries"].copy()
-
             dicts.insert(0, DictionaryConfig(path))
-
             self.engine.config = {"dictionaries": dicts}
             return True
 
@@ -467,8 +473,11 @@ class ToggleDictionary(Command):
         with self.engine:
             index = int("".join(words)) - 1
             dicts = self.engine.config["dictionaries"].copy()
+            change_to = not dicts[index].enabled
+            desc = "Enabling" if change_to else "Disabling"
+            self.output(f"{desc} {dicts[index].path}")
 
-            dicts[index] = dicts[index].replace(enabled=not dicts[index].enabled)
+            dicts[index] = dicts[index].replace(enabled=change_to)
 
             self.engine.config = {"dictionaries": dicts}
             return True
@@ -485,6 +494,7 @@ class RemoveDictionary(Command):
         index = int("".join(words)) - 1
         with self.engine:
             dicts = self.engine.config["dictionaries"].copy()
+            self.output(f"Removing {dicts[index].path}")
             dicts.remove(dicts[index])
             self.engine.config = {"dictionaries": dicts}
             return True
@@ -503,6 +513,7 @@ class SetPriorityDictionary(Command):
         with self.engine:
             dicts = self.engine.config["dictionaries"].copy()
             d = dicts.pop(dictionary)
+            self.output(f"Setting priority {new_index + 1} for {d.path}")
             dicts.insert(new_index, d)
             self.engine.config = {"dictionaries": dicts}
 
@@ -529,14 +540,14 @@ def build_commands(engine, layout):
         sub_commands=[
             AddTranslation(output, partial(layout.on_add_translation, engine)),
             Lookup(output, engine),
-            ToggleOutput(output, engine),
+            Output(output, engine),
             ResetMachine(output, engine.reset_machine),
+            Tape(output, layout.toggle_tape, engine),
+            Suggestions(output, layout.toggle_suggestions, engine),
             Dictionaries(output, engine),
             Machine(output, engine),
             System(output, engine),
             Configure(output, engine),
-            ToggleTape(output, layout.toggle_tape, engine),
-            ToggleSuggestions(output, layout.toggle_suggestions, engine),
             Command(
                 "colors",
                 output,

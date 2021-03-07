@@ -31,9 +31,10 @@ def _(event):
 
 def create_style(fg=None, bg=None) -> Style:
     styles = ""
-    if fg:
+    # plover.cfg doesn't know that "None" is None
+    if fg and fg != "None":
         styles += f"fg:{fg} "
-    if bg:
+    if bg and bg != "None":
         styles += f"bg:{bg}"
     return Style.from_dict({"status": f"{styles} reverse", "normal": f"{styles}"})
 

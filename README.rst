@@ -11,34 +11,30 @@ Requires Plover version 4.0.0 or later
 .. image:: https://img.shields.io/pypi/dm/plover_console_ui.svg
     :target: https://pypi.org/project/plover-console-ui/
 
-
+Run Plover entirely inside your terminal window!
 TODO gif goes here
-
-##########
-Installing
-##########
-
-1. Open Plover
-2. Navigate to the Plugin Manager tool
-3. Select ``plover_console_ui`` in the list
-4. Click install
-
-Or directly install ``plover_console_ui`` into plover's python environment
 
 ###############
 Getting Started
 ###############
 
+1. Open Plover
+#. Navigate to the Plugin Manager tool
+#. Select ``plover_console_ui`` in the list
+#. Click install
+
+Or directly install ``plover_console_ui`` into Plover's python environment
+
 Linux/Mac
 =========
 
-Start plover with the --gui option:
+Start Plover with the --gui option:
 ``plover --gui console``
 
 Running - Windows
 =================
 
-Due to some Windows workaround code (in plover), this plugin does not work well on the packaged Windows build
+Due to some Windows workaround code (in Plover), this plugin does not work well on the packaged Windows build
 
 Here's a launcher that works:
 ``python -m plover --gui console``
@@ -49,7 +45,41 @@ Yes, it requires essentially 'run from source'... I'm sorry
 Usage
 #####
 
-This interface has a multi-level prompt and is fully keyboard driven
+Regular Use
+===========
+
+Plover commands are all functional:
+
+- ``{PLOVER:LOOKUP}``
+- ``{PLOVER:ADD_TRANSLATION}``
+- ``{PLOVER:SUSPEND}``
+- ``{PLOVER:RESUME}``
+- ``{PLOVER:TOGGLE}``
+- ``{PLOVER:FOCUS}``
+- ``{PLOVER:CONFIGURE}``
+
+Note for the commands which do window manager focus:
+
+- ``LOOKUP``
+- ``ADD_TRANSLATION``
+- ``FOCUS``
+- ``CONFIGURE``
+
+This ``console_ui`` only knows which window it lives in *if* that window has focus on start-up
+
+Otherwise: expect the focus feature not to work
+
+Key Commands
+============
+
+These key commands are always available when ``console_ui`` has focus:
+
+- ``Ctrl-C`` or ``Ctrl-Q``: Exits Plover
+- ``PageUp/PageDown``: Scrolls the ``console`` buffer up/down
+  (Note: if anything new is added to ``console`` it will auto-scroll back down)
+
+Command Line
+============
 
 The ``help`` command is *always* available and will show all the currently
 available commands
@@ -57,18 +87,77 @@ available commands
 If a command has the description ``...`` there are further commands
 contained inside
 
-Commands can be partially entered (e.g. you can use ``m`` to use the ``machine``
+Commands can be partially entered (e.g. ``m`` to use the ``machine``
 command)
+This interface has a multi-level menu and is fully keyboard driven
 
-Case is ignored (e.g. ``configure`` is the same as ``CONFIGURE``).
 
-To get back to the previous command level, press ``Enter`` on its own
+Once you know your way around, you don't need to enter each menu one at a time
+(e.g. ``col for goldenrod`` from the top level)
+
+Case is ignored (e.g. ``configure`` is the same as ``CONFIGURE``)
+
+To get back to the previous menu level, press ``Enter`` on its own
 
 If a command has ``<>`` in its description it takes one or more arguments. The type
 of the argument is between the ``<>``
 
 Commands
 ========
+
+- ``addtranslation``: enters ``ADD_TRANSLATION`` mode
+- ``lookup``: enters ``LOOKUP`` mode
+- ``output``: toggles Plover output on/off
+- ``reset``: reconnects current ``machine``
+- ``tape``: toggles paper tape display
+- ``suggestions``: toggles suggestions display
+- ``dictionaries``: configure dictionaries
+
+  - ``add``: add a dictionary by its file path
+  - ``remove``: remove a dictionary by displayed number
+  - ``toggle``: toggle a dictionary by displayed number
+  - ``priority``: prioritise a dictionary by displayed number (to its new number)
+
+- ``machine``: configure ``machine``
+
+  - ``options``: configure current machine options
+  - (One 'set machine' command per installed ``machine`` plugin)
+- ``system``: configure ``system``
+
+  - (One 'set system' command per installed ``system`` plugin)
+
+- ``configure``: Plover configuration commands
+
+  - ``space_placement``: (Before Output|After Output)
+  - ``start_attached``: (True|False)
+  - ``start_capitalized``: (True|False)
+  - ``undo_levels``: Number of undo levels
+  - ``log_file_name``: Name of the log file
+  - ``enable_stroke_logging``: Enable/Disable stroke logging
+  - ``enable_translation_logging``: Enable/Disable translation logging
+  - ``auto_start``: If 'True' enable Plover output on start-up
+  - ``extensions``: Enable/Disable extension commands
+
+    - (One 'toggle extension' command per installed ``extension`` plugin)
+
+- ``colors``: set ``console_ui`` colors
+
+  These commands take `these color names
+  <https://www.w3schools.com/colors/colors_names.asp>`_
+  Or color hexes (e.g. ``#ffffff`` for white)
+  (Note: not all terminals support all colors)
+  - ``foreground``: set foreground color
+  - ``background``: set background color
+
+- ``loglevel``: configure which Plover log messages will whatget printed to ``console_ui``
+
+  - ``WARNING``: any logs at ``WARNING`` or above will be printed
+  - ``CRITICAL``: any logs at ``CRITICAL`` or above will be printed
+  - ``ERROR``: any logs at ``ERROR`` or above will be printed
+  - ``INFO``: any logs at ``INFO`` or above will be printed
+  - ``DEBUG``: any logs at ``DEBUG`` or above will be printed
+
+- ``exit``: exits ``console_ui`` (and Plover)
 
 ############
 Contributing

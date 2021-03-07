@@ -22,7 +22,8 @@ plover_text = """
 --------------------------------
 help: displays available commands
 exit: exits plover
-"""
+(sub-menus can be exited by pressing enter)
+--------------------------------"""
 
 
 class ConsoleLayout:

@@ -133,7 +133,10 @@ class AddTranslation:
         self.update_output()
 
     def update_output(self):
-        output = "Add translation" "\n---------------"
+        output = \
+            "Add translation"\
+            "\n(Escape to abort, Enter to add entry)"\
+            "\n---------------"
         if self.strokes_info:
             output += f"\n{self.strokes_info}"
         if self.translation_info:
