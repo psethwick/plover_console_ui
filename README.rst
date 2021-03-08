@@ -32,8 +32,8 @@ Linux/Mac
 Start Plover with the --gui option:
 ``plover --gui console``
 
-Running - Windows
-=================
+Windows
+=======
 
 Due to some Windows workaround code (in Plover), this plugin does not work well on the packaged Windows build
 
@@ -77,6 +77,7 @@ These key commands are always available when ``console_ui`` has focus:
 
 - ``Ctrl-C`` or ``Ctrl-Q``: Exits Plover
 - ``PageUp/PageDown``: Scrolls the ``console`` buffer up/down
+
   (Note: if anything new is added to ``console`` it will auto-scroll back down)
 
 Command Line
