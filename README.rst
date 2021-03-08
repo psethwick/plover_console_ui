@@ -2,14 +2,14 @@
 Console UI Plugin for Plover
 ############################
 
-This is a plugin for the open source stenography program `Plover <https://www.openstenoproject.org/plover/>`_
-
-Requires Plover version 4.0.0 or later
-
 .. image:: https://img.shields.io/pypi/v/plover_console_ui.svg
     :target: https://pypi.org/project/plover-console-ui/
 .. image:: https://img.shields.io/pypi/dm/plover_console_ui.svg
     :target: https://pypi.org/project/plover-console-ui/
+
+This is a plugin for the open source stenography program `Plover <https://www.openstenoproject.org/plover/>`_
+
+Requires Plover version 4.0.0 or later
 
 Run Plover entirely inside your terminal window!
 
