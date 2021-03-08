@@ -13,7 +13,7 @@ Requires Plover version 4.0.0 or later
 
 Run Plover entirely inside your terminal window!
 
-TODO gif goes here
+.. image:: console-ui.png
 
 ###############
 Getting Started
