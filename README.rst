@@ -12,6 +12,7 @@ Requires Plover version 4.0.0 or later
     :target: https://pypi.org/project/plover-console-ui/
 
 Run Plover entirely inside your terminal window!
+
 TODO gif goes here
 
 ###############
@@ -87,15 +88,16 @@ available commands
 If a command has the description ``...`` there are further commands
 contained inside
 
-Commands can be partially entered (e.g. ``m`` to use the ``machine``
-command)
-This interface has a multi-level menu and is fully keyboard driven
-
+Commands can be partially entered 
+- ``m`` to use the ``machine`` command
 
 Once you know your way around, you don't need to enter each menu one at a time
-(e.g. ``col for goldenrod`` from the top level)
 
-Case is ignored (e.g. ``configure`` is the same as ``CONFIGURE``)
+-  ``col for goldenrod`` from the top level
+
+Case is ignored 
+
+- ``configure`` is the same as ``CONFIGURE``
 
 To get back to the previous menu level, press ``Enter`` on its own
 
@@ -122,6 +124,7 @@ Commands
 
   - ``options``: configure current machine options
   - (One 'set machine' command per installed ``machine`` plugin)
+  
 - ``system``: configure ``system``
 
   - (One 'set system' command per installed ``system`` plugin)
@@ -146,6 +149,7 @@ Commands
   <https://www.w3schools.com/colors/colors_names.asp>`_
   Or color hexes (e.g. ``#ffffff`` for white)
   (Note: not all terminals support all colors)
+  
   - ``foreground``: set foreground color
   - ``background``: set background color
 
