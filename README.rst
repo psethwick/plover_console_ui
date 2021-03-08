@@ -147,7 +147,7 @@ Commands
 
 - ``colors``: set ``console_ui`` colors
 
-  These commands take `these color names
+  These commands take `web color names
   <https://www.w3schools.com/colors/colors_names.asp>`_
   
   Color hexes are also supported (e.g. ``#ffffff`` for white)
