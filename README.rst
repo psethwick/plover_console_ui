@@ -88,16 +88,17 @@ available commands
 If a command has the description ``...`` there are further commands
 contained inside
 
-Commands can be partially entered 
-- ``m`` to use the ``machine`` command
+Commands can be partially entered
+
+    ``m`` to use the ``machine`` command
 
 Once you know your way around, you don't need to enter each menu one at a time
 
--  ``col for goldenrod`` from the top level
+    ``col for goldenrod`` from the top level
 
 Case is ignored 
 
-- ``configure`` is the same as ``CONFIGURE``
+    ``configure`` is the same as ``CONFIGURE``
 
 To get back to the previous menu level, press ``Enter`` on its own
 
@@ -147,13 +148,15 @@ Commands
 
   These commands take `these color names
   <https://www.w3schools.com/colors/colors_names.asp>`_
-  Or color hexes (e.g. ``#ffffff`` for white)
+  
+  Color hexes are also supported (e.g. ``#ffffff`` for white)
+  
   (Note: not all terminals support all colors)
   
   - ``foreground``: set foreground color
   - ``background``: set background color
 
-- ``loglevel``: configure which Plover log messages will whatget printed to ``console_ui``
+- ``loglevel``: configure which Plover log messages will get printed to ``console_ui``
 
   - ``WARNING``: any logs at ``WARNING`` or above will be printed
   - ``CRITICAL``: any logs at ``CRITICAL`` or above will be printed
