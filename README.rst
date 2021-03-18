@@ -113,8 +113,9 @@ Commands
 - ``lookup``: enters ``LOOKUP`` mode
 - ``output``: toggles Plover output on/off
 - ``reset``: reconnects current ``machine``
-- ``tape``: toggles paper tape display
 - ``suggestions``: toggles suggestions display
+- ``tape``: toggles paper tape display
+- ``savetape``: saves content of tape to a file
 - ``dictionaries``: configure dictionaries
 
   - ``add``: add a dictionary by its file path

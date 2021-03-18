@@ -531,6 +531,23 @@ class AddTranslation(Command):
         self.add_translation()
         return True
 
+class SaveTape(Command):
+    """<filename> save contents of tape"""
+
+    def __init__(self, output, tape_buffer):
+        self.tape_buffer = tape_buffer
+        super().__init__("savetape", output)
+
+    def handle(self, words=None):
+        if not words:
+            self.output("Filename must be provided")
+            return True
+        else:
+            filename = normalize_path(' '.join(words))
+            with open(filename, 'a') as f:
+                f.write(self.tape_buffer.text)
+            self.output(f"Saved tape to {filename}")
+            return True
 
 def build_commands(engine, layout):
     output = layout.output_to_console
@@ -542,8 +559,9 @@ def build_commands(engine, layout):
             Lookup(output, engine),
             Output(output, engine),
             ResetMachine(output, engine.reset_machine),
-            Tape(output, layout.toggle_tape, engine),
             Suggestions(output, layout.toggle_suggestions, engine),
+            Tape(output, layout.toggle_tape, engine),
+            SaveTape(output, layout.tape.body.buffer),
             Dictionaries(output, engine),
             Machine(output, engine),
             System(output, engine),
@@ -551,7 +569,7 @@ def build_commands(engine, layout):
             Command(
                 "colors",
                 output,
-                [
+    	            [
                     SetForegroundColor(output, engine),
                     SetBackgroundColor(output, engine),
                 ],
