@@ -1,6 +1,5 @@
 from prompt_toolkit.buffer import Buffer
-
-from .commands import Command, UnsupportedCommand
+from .commands import UnsupportedCommand
 
 
 def peek(list):
@@ -9,28 +8,12 @@ def peek(list):
     return None
 
 
-class Help(Command):
-    def __init__(self, commander) -> None:
-        self.commander = commander
-        super().__init__("help", commander.output)
-
-    def handle(self, words=None):
-        handler = self.commander.current_handler()
-        handler.describe()
-        return True
-
-
-def build_meta_commands(commander):
-    return [Help(commander)]
-
-
 class Commander:
     def __init__(self, top_command, output) -> None:
         self.top_command = top_command
         self.output = output
         self.on_exit_state = None
         self.state = []
-        self.meta_commands = build_meta_commands(self)
 
     def __call__(self, buff: Buffer):
         try:
@@ -75,9 +58,6 @@ class Commander:
                 self.state.pop()
             return
 
-        if self.handled_meta_command(words):
-            return
-
         local_state = self.state[:]
         handler = self.current_handler()
 
@@ -98,14 +78,6 @@ class Commander:
 
         if not handler.handle(words):
             self.state = local_state
-
-    def handled_meta_command(self, words):
-        possible_meta = peek(words)
-        for meta in self.meta_commands:
-            if meta.name.lower().startswith(possible_meta.lower()):
-                meta.handle(words)
-                return True
-        return False
 
     def prompt(self):
         return " ".join(self.state) + "> "

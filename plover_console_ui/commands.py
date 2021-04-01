@@ -29,6 +29,9 @@ class Command:
 
     def handle(self, words=[]):
         if words:
+            if words[0].lower().startswith("help"):
+                self.describe()
+                return True
             raise UnsupportedCommand()
         else:
             self.describe()
