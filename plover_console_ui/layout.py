@@ -104,18 +104,20 @@ class ConsoleLayout:
 
     def scroll_amount(self):
         # magic number: top frame + bottom frame + prompt line + status line
-        return get_app().output.get_size().rows - 4
+        console_size = get_app().output.get_size().rows - 4
+
+        return console_size * 2//3
 
     def scroll_up(self):
         doc = self.console.body.document
         row = doc.cursor_position_row
-        window_size = self.scroll_amount()
+        amount = self.scroll_amount()
 
-        row -= window_size
+        row -= amount
 
         if doc.on_last_line:
             # first scroll won't move it
-            row -= window_size
+            row -= amount
 
         # don't over-scroll
         row = row if row >= 0 else 0
@@ -125,13 +127,13 @@ class ConsoleLayout:
     def scroll_down(self):
         doc = self.console.body.document
         row = doc.cursor_position_row
-        window_size = self.scroll_amount()
+        amount = self.scroll_amount()
 
-        row += window_size
+        row += amount
 
         if doc.on_first_line:
             # first scroll won't move it
-            row += window_size
+            row += amount
 
         new_pos = doc.translate_row_col_to_index(row=row, col=0)
         self.console.body.document = Document(doc.text, cursor_position=new_pos)

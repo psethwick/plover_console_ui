@@ -1,11 +1,10 @@
-from plover import log
-from plover.log import logging
+from plover.log import logging, LOG_FORMAT
 
 
 class ConsoleNotificationHandler(logging.Handler):
     """ Handler using console to show messages. """
 
-    def __init__(self):
+    def __init__(self, format=LOG_FORMAT):
         super().__init__()
         self.output = None
         self.setFormatter(logging.Formatter(format))
