@@ -8,9 +8,7 @@ class ConsoleNotificationHandler(logging.Handler):
     def __init__(self):
         super().__init__()
         self.output = None
-        self.setFormatter(
-            log.NoExceptionTracebackFormatter("%(levelname)s: %(message)s")
-        )
+        self.setFormatter(logging.Formatter(format))
 
     def set_output(self, output):
         self.output = output

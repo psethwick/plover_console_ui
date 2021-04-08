@@ -16,9 +16,6 @@ from .config import console_ui_options
 
 
 def show_error(title, message):
-# TODO gifs for readme
-# TODO test all features
-
     # this only gets called if gui.main fails
     # so we can't rely on prompt application stuff
     # printing is fine
