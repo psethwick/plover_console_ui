@@ -112,7 +112,7 @@ Commands
 - ``addtranslation``: enters ``ADD_TRANSLATION`` mode
 - ``lookup``: enters ``LOOKUP`` mode
 - ``output``: toggles Plover output on/off
-- ``reset``: reconnects current ``machine``
+- ``reset``: reconnects current ``machine`` (reloads dictionaries, too)
 - ``suggestions``: toggles suggestions display
 - ``tape``: toggles paper tape display
 - ``savetape``: saves content of tape to a file
@@ -132,7 +132,7 @@ Commands
 
   - (One 'set system' command per installed ``system`` plugin)
 
-- ``configure``: Plover configuration commands
+- ``configure``: Plover configuration commands (changes reload dictionaries, too)
 
   - ``space_placement``: (Before Output|After Output)
   - ``start_attached``: (True|False)
