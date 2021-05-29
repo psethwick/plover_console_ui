@@ -200,6 +200,6 @@ class AddTranslation:
             output += f"\n{self.translation_info}"
 
         if self.outcome:
-            output += f"\n---------------\n{self.outcome}"
+            output += f"\n -----------------\n{self.outcome}"
 
         self.on_output(output)
