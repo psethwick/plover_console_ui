@@ -66,10 +66,10 @@ class AddTranslation:
 
         self.dictionary_picker = Window(FormattedTextControl(
             focusable=True,
-            text=lambda: f"Add to: {self.dicts[self.dict_index].path}",
+            text=lambda: f"{self.dicts[self.dict_index].path}",
             style="class:normal",
             key_bindings=picker_kb
-        ))
+        ), height=1)
 
         self.strokes_field = TextArea(
             prompt="Strokes: ",
@@ -120,6 +120,7 @@ class AddTranslation:
                 add_filter(self.engine)
             else:
                 remove_filter(self.engine)
+            self.update_output()
 
         @kb.add("tab")
         def _(event):
@@ -182,9 +183,17 @@ class AddTranslation:
 
     def update_output(self):
         output = \
-            "Add translation"\
-            "\n(Escape to abort, Enter to add entry)"\
-            "\n---------------"
+            " -----------------\n"\
+            "| Add translation |\n"\
+            " -----------------"\
+            "\nEscape to abort, Enter to add entry"
+
+        layout = get_app().layout
+        if layout.has_focus(self.dictionary_picker):
+            output += "\n← or → to pick dictionary"
+
+        output += "\n -----------------"
+
         if self.strokes_info:
             output += f"\n{self.strokes_info}"
         if self.translation_info:
