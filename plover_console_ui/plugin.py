@@ -30,7 +30,7 @@ def config_saver(config: Config, output, update):
             config.save(f)
 
 
-def main(config: Config):
+def main(config: Config, controller=None):
     # this screws things up
     # hax tho
     log.remove_handler(__logger._print_handler)
@@ -42,7 +42,7 @@ def main(config: Config):
     for option in console_ui_options:
         config._OPTIONS[option.name] = option
 
-    engine = ConsoleEngine(config, KeyboardEmulation(), layout)
+    engine = ConsoleEngine(config, KeyboardEmulation(), layout, controller)
 
     if not engine.load_config():
         return 3
