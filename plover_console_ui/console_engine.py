@@ -24,8 +24,12 @@ def status_bar_text(engine) -> str:
 
 
 class ConsoleEngine(StenoEngine, Thread):
-    def __init__(self, config, keyboard_emulation, layout: ConsoleLayout):
-        StenoEngine.__init__(self, config, keyboard_emulation)
+    def __init__(self, config, keyboard_emulation, layout: ConsoleLayout, controller=None):
+        if controller:
+            StenoEngine.__init__(self, config, controller, keyboard_emulation)
+        else:
+            StenoEngine.__init__(self, config, keyboard_emulation)
+
         Thread.__init__(self)
         self.name += "-engine"
         self.hook_connect("focus", focus_toggle)
