@@ -110,6 +110,11 @@ Commands
 ========
 
 - ``addtranslation``: enters ``ADD_TRANSLATION`` mode
+
+  - Tab/Shift-Tab to move between ``Strokes``, ``Output`` and choose dictionary field
+  
+    - When in the 'choose dictionary' field you can press left/right arrows to cycle (writable) dictionaries
+    
 - ``lookup``: enters ``LOOKUP`` mode
 - ``output``: toggles Plover output on/off
 - ``reset``: reconnects current ``machine`` (reloads dictionaries)

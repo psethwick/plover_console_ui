@@ -3,7 +3,7 @@
 
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.containers import HSplit
+from prompt_toolkit.layout.containers import HSplit, FormattedTextControl, Window
 from prompt_toolkit.widgets import TextArea
 from prompt_toolkit.application import get_app
 
@@ -34,6 +34,42 @@ class AddTranslation:
         self.translation_info = ""
         # we start in the strokes field
         add_filter(engine)
+
+        self.dicts = []
+        for path in self.engine.dictionaries:
+            d = self.engine.dictionaries[path]
+            if not d.readonly:
+                self.dicts.append(d)
+
+        self.dict_index = 0
+
+        picker_kb = KeyBindings()
+
+        # FormattedTextControl can't have accept_handler bound
+        @picker_kb.add("enter")
+        def _(event):
+            self.accept(None)
+
+        @picker_kb.add("left")
+        def _(event):
+            target = self.dict_index - 1
+            if target < 0:
+                target = len(self.dicts) - 1
+            self.dict_index = target
+
+        @picker_kb.add("right")
+        def _(event):
+            target = self.dict_index + 1
+            if target > len(self.dicts) - 1:
+                target = 0
+            self.dict_index = target
+
+        self.dictionary_picker = Window(FormattedTextControl(
+            focusable=True,
+            text=lambda: f"{self.dicts[self.dict_index].path}",
+            style="class:normal",
+            key_bindings=picker_kb
+        ), height=1)
 
         self.strokes_field = TextArea(
             prompt="Strokes: ",
@@ -73,29 +109,42 @@ class AddTranslation:
             self.update_output()
             on_exit()
 
+        def focus(direction):
+            layout = get_app().layout
+            if direction == 'next':
+                layout.focus_next()
+            if direction == 'previous':
+                layout.focus_previous()
+
+            if layout.has_focus(self.strokes_field):
+                add_filter(self.engine)
+            else:
+                remove_filter(self.engine)
+            self.update_output()
+
         @kb.add("tab")
         def _(event):
-            self.cycle_focus()
+            focus('next')
+
+        @kb.add("s-tab")
+        def _(event):
+            focus('previous')
 
         self.container = HSplit(
-            [self.strokes_field, self.translation_field],
+            [self.dictionary_picker, self.strokes_field, self.translation_field],
             key_bindings=kb,
         )
 
     def strokes(self):
         return tuple(self.strokes_field.text.strip().split())
 
-    def cycle_focus(self):
-        layout = get_app().layout
-        if layout.has_focus(self.strokes_field):
-            remove_filter(self.engine)
-        else:
-            add_filter(self.engine)
-        layout.focus_next()
-
     def accept(self, _):
         if self.strokes() and self.translation_field.text:
-            self.engine.add_translation(self.strokes(), self.translation_field.text)
+            self.engine.add_translation(
+                    self.strokes(), 
+                    self.translation_field.text, 
+                    self.dicts[self.dict_index].path
+            )
             self.outcome = "Translation added"
             self.update_output()
             remove_filter(self.engine)
@@ -134,15 +183,23 @@ class AddTranslation:
 
     def update_output(self):
         output = \
-            "Add translation"\
-            "\n(Escape to abort, Enter to add entry)"\
-            "\n---------------"
+            " -----------------\n"\
+            "| Add translation |\n"\
+            " -----------------"\
+            "\nEscape to abort, Enter to add entry"
+
+        layout = get_app().layout
+        if layout.has_focus(self.dictionary_picker):
+            output += "\n← or → to pick dictionary"
+
+        output += "\n -----------------"
+
         if self.strokes_info:
             output += f"\n{self.strokes_info}"
         if self.translation_info:
             output += f"\n{self.translation_info}"
 
         if self.outcome:
-            output += f"\n---------------\n{self.outcome}"
+            output += f"\n -----------------\n{self.outcome}"
 
         self.on_output(output)
