@@ -24,7 +24,9 @@ def status_bar_text(engine) -> str:
 
 
 class ConsoleEngine(StenoEngine, Thread):
-    def __init__(self, config, keyboard_emulation, layout: ConsoleLayout, controller=None):
+    def __init__(
+        self, config, keyboard_emulation, layout: ConsoleLayout, controller=None
+    ):
         if controller:
             StenoEngine.__init__(self, config, controller, keyboard_emulation)
         else:
@@ -40,6 +42,11 @@ class ConsoleEngine(StenoEngine, Thread):
         self.hook_connect("config_changed", layout.tape.on_config_changed)
         self.hook_connect("add_translation", partial(layout.on_add_translation, self))
         self.cmder = Commander(build_commands(self, layout), layout.output_to_console)
+
+        def on_output_changed(_):
+            get_app().invalidate()
+
+        self.hook_connect("output_changed", on_output_changed)
 
         def on_lookup():
             focus_console()
