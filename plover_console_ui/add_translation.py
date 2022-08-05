@@ -38,7 +38,7 @@ class AddTranslation:
         self.dicts = []
         for path in self.engine.dictionaries:
             d = self.engine.dictionaries[path]
-            if not d.readonly:
+            if not d.readonly and d.enabled:
                 self.dicts.append(d)
 
         self.dict_index = 0
