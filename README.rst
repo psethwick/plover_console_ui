@@ -24,13 +24,22 @@ Getting Started
 #. Select ``plover_console_ui`` in the list
 #. Click install
 
-Or directly install ``plover_console_ui`` into Plover's python environment
+Or directly install ``plover_console_ui`` into Plover's python environment using ``plover -s plover_plugins install plover_console_ui``
+
+- Note: The plover command is available under slightly different names depending on your OS, relative to your installation directory.
+  - **Windows**: ``C:\Program Files (x86)\Open Steno Project\Plover 4.0.0\plover_console.exe``
+  - **macOS**: ``/Applications/Plover.app/Contents/MacOS/Plover``
+  - **Linux**: ``plover.AppImage``
+
+For more information on Plover's Command Line Reference, see `The Plover Docs <https://plover.readthedocs.io/en/latest/cli_reference.html>`_.
 
 Linux/Mac
 =========
 
-Start Plover with the --gui option:
-``plover --gui console``
+Start Plover with the -g option:
+``plover -g console``
+
+If your shell returns ``command not found: plover`` or a similar error, refer to Getting Started to access the ``plover`` command.
 
 Windows
 =======
@@ -38,9 +47,11 @@ Windows
 Due to some Windows workaround code (in Plover), this plugin does not work well on the packaged Windows build
 
 Here's a launcher that works:
-``python -m plover --gui console``
+``python -m plover -g console``
 
 Yes, it requires essentially 'run from source'... I'm sorry
+
+If your shell returns ``command not found: plover`` or a similar error, refer to Getting Started to access the ``plover`` command.
 
 #####
 Usage
